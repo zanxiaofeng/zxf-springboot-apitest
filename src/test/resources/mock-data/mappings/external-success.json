@@ -1,0 +1,21 @@
+{
+  "request": {
+    "urlPath": "/external/api",
+    "method": "GET",
+    "queryParameters": {
+      "task": {
+        "equalTo": "task-200"
+      }
+    }
+  },
+  "response": {
+    "status": 200,
+    "jsonBody": {
+      "task": "EXT.task-200",
+      "value": "1234567890"
+    },
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}
