@@ -1,0 +1,35 @@
+# Main application - MySQL configuration
+server:
+  port: 8080
+
+# MySQL Database Configuration (Production)
+spring:
+  datasource:
+    url: jdbc:mysql://localhost:3306/demo_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    username: demo
+    password: demo123
+
+  # JPA/Hibernate
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+
+  # SQL Init
+  sql:
+    init:
+      mode: always
+      schema-locations: classpath:sql/init/schema.sql
+      data-locations: classpath:sql/init/data.sql
+      continue-on-error: false
+
+# Task Service Configuration
+task-service:
+  url: http://localhost:8090
+
+# Logging
+logging:
+  level:
+    root: INFO
+    zxf.springboot.demo: DEBUG

@@ -12,7 +12,7 @@ import java.net.URI;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Base test class for API tests using TestRestTemplate in Server Mode.
+ * Base test class for API tests using TestRestTemplate.
  * Provides common GET/POST/PUT/DELETE methods with optional status assertion.
  *
  * Key features:
@@ -29,7 +29,7 @@ import static org.assertj.core.api.Assertions.assertThat;
     "classpath:sql/init/schema.sql",
     "classpath:sql/init/data.sql"
 })
-public abstract class BaseServerModeTest {
+public abstract class BaseApiTest {
 
     @Autowired
     protected TestRestTemplate testRestTemplate;

@@ -1,5 +1,6 @@
 package zxf.springboot.demo.apitest.support.sql;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Component;
@@ -14,13 +15,9 @@ import java.util.Map;
  */
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class DatabaseVerifier {
-
     private final NamedParameterJdbcTemplate jdbcTemplate;
-
-    public DatabaseVerifier(NamedParameterJdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
 
     /**
      * Verifies database connectivity by executing a simple query.
@@ -46,14 +43,14 @@ public class DatabaseVerifier {
      */
     public boolean tableExists(String tableName) {
         String query = """
-            SELECT COUNT(*) FROM information_schema.tables
-            WHERE table_name = :tableName
-            """;
+                SELECT COUNT(*) FROM information_schema.tables
+                WHERE table_name = :tableName
+                """;
         try {
             Integer count = jdbcTemplate.queryForObject(
-                query,
-                Collections.singletonMap("tableName", tableName.toLowerCase()),
-                Integer.class
+                    query,
+                    Collections.singletonMap("tableName", tableName.toLowerCase()),
+                    Integer.class
             );
             return count != null && count > 0;
         } catch (Exception e) {
@@ -91,14 +88,14 @@ public class DatabaseVerifier {
         String query = String.format("SELECT COUNT(*) FROM %s WHERE %s = :value", tableName, columnName);
         try {
             Long count = jdbcTemplate.queryForObject(
-                query,
-                Collections.singletonMap("value", value),
-                Long.class
+                    query,
+                    Collections.singletonMap("value", value),
+                    Long.class
             );
             return count != null && count > 0;
         } catch (Exception e) {
             log.error("Failed to check if record exists in '{}' where '{}' = '{}'",
-                tableName, columnName, value, e);
+                    tableName, columnName, value, e);
             return false;
         }
     }
@@ -106,26 +103,26 @@ public class DatabaseVerifier {
     /**
      * Retrieves a single value from a table by column and ID.
      *
-     * @param tableName     the name of the table
-     * @param idColumnName  the name of the ID column
-     * @param id            the ID value
-     * @param resultColumn  the column to retrieve
+     * @param tableName    the name of the table
+     * @param idColumnName the name of the ID column
+     * @param id           the ID value
+     * @param resultColumn the column to retrieve
      * @return the value, or null if not found
      */
     public Object getValueById(String tableName, String idColumnName, Object id, String resultColumn) {
         String query = String.format(
-            "SELECT %s FROM %s WHERE %s = :id",
-            resultColumn, tableName, idColumnName
+                "SELECT %s FROM %s WHERE %s = :id",
+                resultColumn, tableName, idColumnName
         );
         try {
             return jdbcTemplate.queryForObject(
-                query,
-                Collections.singletonMap("id", id),
-                Object.class
+                    query,
+                    Collections.singletonMap("id", id),
+                    Object.class
             );
         } catch (Exception e) {
             log.error("Failed to get value from table '{}', column '{}' where '{}' = '{}'",
-                tableName, resultColumn, idColumnName, id, e);
+                    tableName, resultColumn, idColumnName, id, e);
             return null;
         }
     }

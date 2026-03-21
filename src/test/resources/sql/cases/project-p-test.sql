@@ -1,0 +1,2 @@
+DELETE FROM PROJECT WHERE ID = 'p-test';
+INSERT INTO PROJECT(ID, NAME) VALUES ('p-test','test project');

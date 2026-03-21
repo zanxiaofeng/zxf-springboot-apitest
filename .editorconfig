@@ -1,0 +1,132 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+
+[*.java]
+max_line_length = 120
+indent_style = space
+indent_size = 4
+ij_java_blank_lines_after_class_header = 0
+ij_java_blank_lines_after_imports = 1
+ij_java_blank_lines_after_package = 1
+ij_java_call_parameters_new_line_after_left_paren = false
+ij_java_call_parameters_right_paren_on_new_line = false
+ij_java_class_count_to_insert_imports = 999
+ij_java_const_calUSE_PARENTHESES_IN_EXPRESSIONS = true
+ij_java_do_not_indent_top_of_class = false
+ij_java_do_not_wrap_after_primary_clause = true
+ij_java_enforce_comma_sign = true
+ij_java_field_annotation_wrap_on_split = false
+ij_java_folding_one liners = false
+ij_java_if_else_statement_force_braces = true
+ij_java_imports_layout = *
+ij_java_indent_case_from_switch = true
+ij_java_insert_inner_class_indentation = true
+ij_java_keep_blank_lines_before_right_brace = 0
+ij_java_keep_blank_lines_in_declarations = 0
+ij_java_keep_blank_lines_in_imports = 0
+ij_java_keep_blank_lines_in_methods = 0
+ij_java_keep_blank_lines_in_type_declarations = 0
+ij_java_keep_control_flow_in_assertions = false
+ij_java_keep_digits_inside_long_integers = true
+ij_java_keep_first_column_comment = true
+ij_java_keep_indents_on_empty_lines = false
+ij_java_keep_line_breaks = true
+ij_java_keep_multiple_exports_in_spec = false
+ij_java_keep_null_checks_in_assertions = false
+ij_java_keep_simple_class_in_one_line = true
+ij_java_keep_simple_methods_in_one_line = true
+ij_java_method_annotation_wrap_on_split = false
+ij_java_methods_call_chain_wrap_on_split = false
+ij_java_modifier_list_wrap_on_split = false
+ij_java_name_count_to_use_import_on_demand = 999
+ij_java_parameter_annotation_wrap_on_split = false
+ij_java_space_after_colon = true
+ij_java_space_after_comma = true
+ij_java_space_after_for_semicolon = true
+ij_java_space_after_quest = true
+ij_java_space_before_at_for_rule = false
+ij_java_space_before_catch_keyword = true
+ij_java_space_before_colon = false
+ij_java_space_before_comma = false
+ij_java_space_before_do_left_brace = true
+ij_java_space_before_else_keyword = true
+ij_java_space_before_finally_keyword = true
+ij_java_space_before_for_left_brace = true
+ij_java_space_before_if_keyword = true
+ij_java_space_before_lambda_left_brace = true
+ij_java_space_before_left_brace = true
+ij_java_space_before_method_left_paren = false
+ij_java_space_before_quest = true
+ij_java_space_before_switch_left_brace = true
+ij_java_space_before_synchronized_left_brace = true
+ij_java_space_before_try_left_brace = true
+ij_java_space_before_while_keyword = true
+ij_java_spaces_around_additive_operators = true
+ij_java_spaces_around_assignment = true
+ij_java_spaces_around_bitwise_operators = true
+ij_java_spaces_around_equality_operators = true
+ij_java_spaces_around_logical_operators = true
+ij_java_spaces_around_method_ref_lambda = true
+ij_java_spaces_around_method_reference_in_assertions = true
+ij_java_spaces_around_operators_in_assignments = true
+ij_java_spaces_around_relational_operators = true
+ij_java_spaces_around_shift_operators = true
+ij_java_spaces_within_annotation_parentheses = false
+ij_java_spaces_within_array_initializers_braces = false
+ij_java_spaces_within_assertions = false
+ij_java_spaces_within_cast_parentheses = false
+ij_java_spaces_within_catch_parentheses = false
+ij_java_spaces_within_for_parentheses = false
+ij_java_spaces_within_if_parentheses = false
+ij_java_spaces_within_lambda_parameter_parens = false
+ij_java_spaces_within_method_call_parens = false
+ij_java_spaces_within_method_parentheses = false
+ij_java_spaces_within_parentheses = false
+ij_java_spaces_within_switch_parentheses = false
+ij_java_spaces_within_synchronized_parentheses = false
+ij_java_spaces_within_try_parentheses = false
+ij_java_spaces_within_while_parentheses = false
+ij_java_special_else_if_treatment = true
+ij_java_subindent_name = 4
+ij_java_ternary_operation_signs_on_next_line = false
+ij_java_ternary_operation_wrap_on_split = false
+ij_java_use_external_class_formatting = true
+ij_java_use_indent_font_metrics = true
+ij_java_use_single_class_imports = true
+ij_jva_variable_annotation_wrap_on_split = false
+ij_java_variable_annotation_wrap_on_split = false
+ij_java_wrap_first_method_in_call_chain = false
+ij_java_wrap_long_lines = false
+ij_java_wrap_on_typing = false
+
+[*.xml]
+indent_size = 2
+ij_xml_attribute_wrap = on
+ij_xml_block_comment_at_first_column = true
+ij_xml_keep_blank_lines = false
+ij_xml_line_comment_at_first_column = true
+ij_xml_space_after_tag_name = false
+ij_xml_wrap_lines = false
+
+[*.{gradle,gradle.kts}]
+indent_size = 4
+
+[*.json]
+indent_size = 2
+
+[*.md]
+max_line_length = off
+ij_md_wrap_lines = false
+
+[*.{yml,yaml}]
+indent_size = 2
+ij_yaml_indent = 0
+
+[*.properties]
+ij_properties_align_key_value_pairs = false
+ij_properties_keep_blank_lines = false
+ij_properties_spaces_around_key_value_separators = false

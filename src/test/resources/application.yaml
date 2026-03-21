@@ -1,0 +1,64 @@
+server:
+  port: 8080
+
+# H2 Database Configuration
+spring:
+  datasource:
+    url: jdbc:h2:mem:testdb;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;AUTO_RECONNECT=TRUE;MODE=MYSQL;DATABASE_TO_LOWER=TRUE;
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: password
+
+  # H2 Console
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+      settings:
+        trace: false
+        web-allow-others: false
+
+  # SQL Init Mode - disabled, using @Sql instead
+  sql:
+    init:
+      mode: never
+
+# Task Service Configuration
+task-service:
+  url: http://localhost:8090
+
+
+zxf:
+  trace:
+    inbound:
+      enabled: true
+      logging: true
+      mdc-injection:
+        injections:
+          - key: ENV
+            header: X-ENV
+          - key: REQ_ID
+            header: X-Request-Id
+    outbound:
+      enabled: true
+    sensitive-mask:
+      headers:
+        - Token
+        - Authorization
+        - Cookie
+        - Set-Cookie
+        - host
+        - Matched-Stub-Id
+        - user-agent
+      json-names:
+        - email
+        - token
+        - password
+
+# Logging Configuration
+logging:
+  level:
+    root: ERROR
+    zxf.springboot.demo: DEBUG
+    org.springframework.test.context: DEBUG
+    org.springframework.jdbc.core: DEBUG

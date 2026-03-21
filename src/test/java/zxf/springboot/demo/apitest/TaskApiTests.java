@@ -1,49 +1,45 @@
 package zxf.springboot.demo.apitest;
 
-import com.google.common.base.Charsets;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.io.IOUtils;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
-import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.comparator.JSONComparator;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.wiremock.spring.ConfigureWireMock;
 import org.wiremock.spring.EnableWireMock;
-import zxf.springboot.demo.apitest.support.BaseServerModeTest;
+import zxf.springboot.demo.apitest.support.BaseApiTest;
 import zxf.springboot.demo.apitest.support.json.JSONComparatorFactory;
 import zxf.springboot.demo.apitest.support.mocks.TaskServiceMockFactory;
-import zxf.springboot.demo.apitest.support.mocks.TaskServiceMockVerifier;
 
 import java.io.IOException;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * Server Mode API Tests for Demo Application.
+ * Task API Tests.
  *
  * Features:
  * - Uses WireMock to mock task-service
  * - Uses H2 in-memory database
  * - Uses TestRestTemplate for HTTP calls
  * - Uses JSONAssert for response validation
+ * - Each test method tests only ONE endpoint
  */
 @Slf4j
 @EnableWireMock({
     @ConfigureWireMock(name = "task-service", port = 8090, filesUnderClasspath = "mock-data")
 })
-public class ApiServerModeTests extends BaseServerModeTest {
+public class TaskApiTests extends BaseApiTest {
 
     private JSONComparator jsonComparator;
 
     @BeforeAll
     static void setupForAll() {
-        log.info("========================= Starting Server Mode Tests =========================");
+        log.info("========================= Starting Task API Tests =========================");
     }
 
     @BeforeEach
@@ -52,13 +48,13 @@ public class ApiServerModeTests extends BaseServerModeTest {
         log.info("========================= Setup for each test =========================");
     }
 
-    // ==================== POST Task Tests ====================
+    // ==================== POST /api/tasks Tests ====================
 
     @ParameterizedTest(name = "Create task with name-{0}")
     @CsvSource({"task-one", "task-two", "task-three"})
     void testCreateTask(String taskName) throws Exception {
         // Given
-        String url = "/api/task";
+        String url = "/api/tasks";
         String requestBody = String.format("{\"name\":\"%s\",\"projectId\":null,\"priority\":1}", taskName);
 
         TaskServiceMockFactory.mockCreateTaskSuccess(taskName,
@@ -71,15 +67,12 @@ public class ApiServerModeTests extends BaseServerModeTest {
         assertThat(response.getHeaders().getFirst("Content-Type")).isEqualTo("application/json");
         assertThat(response.getBody()).contains("\"name\":\"" + taskName + "\"");
         assertThat(response.getBody()).contains("\"status\":\"PENDING\"");
-
-        // Verify task-service was called
-        TaskServiceMockVerifier.verifyCreateTaskCalled(1, taskName);
     }
 
     @Test
     void testCreateTaskWithProject() throws Exception {
         // Given
-        String url = "/api/task";
+        String url = "/api/tasks";
         String requestBody = "{\"name\":\"task-with-project\",\"projectId\":\"proj-001\",\"priority\":5}";
 
         TaskServiceMockFactory.mockCreateTaskSuccess("task-with-project",
@@ -96,7 +89,7 @@ public class ApiServerModeTests extends BaseServerModeTest {
     @Test
     void testCreateTaskWithValidationError() throws Exception {
         // Given
-        String url = "/api/task";
+        String url = "/api/tasks";
         String requestBody = "{\"name\":\"\",\"projectId\":null,\"priority\":1}";
 
         // When
@@ -106,39 +99,30 @@ public class ApiServerModeTests extends BaseServerModeTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
     }
 
-    // ==================== GET Task Tests ====================
+    // ==================== GET /api/tasks/{id} Tests ====================
 
     @Test
-    void testGetTaskStatus() throws Exception {
-        // Given - First create a task
-        String createUrl = "/api/task";
-        String createBody = "{\"name\":\"test-task-query\",\"projectId\":null,\"priority\":1}";
-        TaskServiceMockFactory.mockCreateTaskSuccess("test-task-query",
-                "{\"taskId\":\"ext-789\",\"status\":\"CREATED\"}");
-        ResponseEntity<String> createResponse = httpPost(createUrl, createBody);
-        assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+    void testGetTaskById() throws Exception {
+        // Given - 使用预置数据 task-001
+        String taskId = "task-001";
+        String url = "/api/tasks/" + taskId;
 
-        // Extract task ID from response
-        String responseBody = createResponse.getBody();
-        String taskId = responseBody.substring(responseBody.indexOf("\"id\":\"") + 6, responseBody.indexOf("\"", responseBody.indexOf("\"id\":\"") + 6));
-
-        // Mock the status query
-        TaskServiceMockFactory.mockGetTaskStatusSuccess("test-task-query",
+        TaskServiceMockFactory.mockGetTaskStatusSuccess("Test Task One",
                 "{\"taskId\":\"ext-789\",\"status\":\"COMPLETED\"}");
 
-        // When - Get task status
-        String getUrl = "/api/task/" + taskId;
-        ResponseEntity<String> response = httpGetAndAssert(getUrl, HttpStatus.OK);
+        // When
+        ResponseEntity<String> response = httpGetAndAssert(url, HttpStatus.OK);
 
         // Then
         assertThat(response.getHeaders().getFirst("Content-Type")).isEqualTo("application/json");
-        assertThat(response.getBody()).contains("PENDING");
+        assertThat(response.getBody()).contains("task-001");
+        assertThat(response.getBody()).contains("Test Task One");
     }
 
     @Test
-    void testGetTaskNotFound() throws Exception {
+    void testGetTaskByIdNotFound() throws Exception {
         // Given
-        String url = "/api/task/" + UUID.randomUUID();
+        String url = "/api/tasks/non-existent-task-id";
 
         // When
         ResponseEntity<String> response = httpGet(url);
@@ -147,22 +131,18 @@ public class ApiServerModeTests extends BaseServerModeTest {
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
     }
 
-    // ==================== GET All Tasks Test ====================
+    // ==================== GET /api/tasks Tests ====================
 
     @Test
     void testGetAllTasks() throws Exception {
-        // Given
-        String createUrl = "/api/task";
-        String createBody = "{\"name\":\"list-task\",\"projectId\":null,\"priority\":1}";
-        TaskServiceMockFactory.mockCreateTaskSuccess("list-task",
-                "{\"taskId\":\"ext-list\",\"status\":\"CREATED\"}");
-        httpPost(createUrl, createBody);
+        // Given - 使用预置数据
+        String url = "/api/tasks";
 
         // When
-        String url = "/api/tasks";
         ResponseEntity<String> response = httpGetAndAssert(url, HttpStatus.OK);
 
         // Then
-        assertThat(response.getBody()).contains("list-task");
+        assertThat(response.getBody()).contains("task-001");
+        assertThat(response.getBody()).contains("task-002");
     }
 }

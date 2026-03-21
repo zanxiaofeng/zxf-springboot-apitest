@@ -1,5 +1,6 @@
 package zxf.springboot.demo.service;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
@@ -10,13 +11,10 @@ import java.util.Map;
 
 @Slf4j
 @Service
+@RequiredArgsConstructor
 public class DatabaseService {
 
     private final NamedParameterJdbcTemplate jdbcTemplate;
-
-    public DatabaseService(NamedParameterJdbcTemplate jdbcTemplate) {
-        this.jdbcTemplate = jdbcTemplate;
-    }
 
     public List<Map<String, Object>> findAllProjects() {
         log.info("Finding all projects");
@@ -76,14 +74,5 @@ public class DatabaseService {
             "DELETE FROM project WHERE id = :id",
             Collections.singletonMap("id", id)
         );
-    }
-
-    public int countProjects() {
-        Integer count = jdbcTemplate.queryForObject(
-            "SELECT COUNT(*) FROM project",
-            Collections.emptyMap(),
-            Integer.class
-        );
-        return count != null ? count : 0;
     }
 }
