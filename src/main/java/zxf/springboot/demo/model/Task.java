@@ -4,11 +4,16 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Map;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class TaskRequest {
+public class Task {
+    private String id;
     private String name;
+    private String status;
     private String projectId;
     private Integer priority;
+    private Map<String, Object> downstreamResponse;
 }

@@ -16,10 +16,11 @@ import org.wiremock.spring.ConfigureWireMock;
 import org.wiremock.spring.EnableWireMock;
 import zxf.springboot.demo.apitest.support.BaseServerModeTest;
 import zxf.springboot.demo.apitest.support.json.JSONComparatorFactory;
-import zxf.springboot.demo.apitest.support.mocks.ExternalServiceMockFactory;
-import zxf.springboot.demo.apitest.support.mocks.ExternalServiceMockVerifier;
+import zxf.springboot.demo.apitest.support.mocks.TaskServiceMockFactory;
+import zxf.springboot.demo.apitest.support.mocks.TaskServiceMockVerifier;
 
 import java.io.IOException;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -27,18 +28,17 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Server Mode API Tests for Demo Application.
  *
  * Features:
- * - Uses WireMock to mock external service
+ * - Uses WireMock to mock task-service
  * - Uses H2 in-memory database
  * - Uses TestRestTemplate for HTTP calls
  * - Uses JSONAssert for response validation
  */
 @Slf4j
 @EnableWireMock({
-    @ConfigureWireMock(name = "external-service", port = 8090, filesUnderClasspath = "mock-data")
+    @ConfigureWireMock(name = "task-service", port = 8090, filesUnderClasspath = "mock-data")
 })
 public class ApiServerModeTests extends BaseServerModeTest {
 
-    private String requestTemplate;
     private JSONComparator jsonComparator;
 
     @BeforeAll
@@ -48,84 +48,121 @@ public class ApiServerModeTests extends BaseServerModeTest {
 
     @BeforeEach
     void setupForEach() throws IOException {
-        requestTemplate = IOUtils.resourceToString("/test-data/post-request.json", Charsets.UTF_8);
         jsonComparator = JSONComparatorFactory.buildApiResponseComparator();
         log.info("========================= Setup for each test =========================");
     }
 
-    // ==================== GET Tests ====================
+    // ==================== POST Task Tests ====================
 
-    @Test
-    void testGetTaskSuccess() throws Exception {
+    @ParameterizedTest(name = "Create task with name-{0}")
+    @CsvSource({"task-one", "task-two", "task-three"})
+    void testCreateTask(String taskName) throws Exception {
         // Given
-        String url = "/api/task?task=task-200";
-        ExternalServiceMockFactory.mockExternalServiceSuccess("task-200",
-                "{\"task\":\"EXT.task-200\",\"value\":\"1234567890\"}");
+        String url = "/api/task";
+        String requestBody = String.format("{\"name\":\"%s\",\"projectId\":null,\"priority\":1}", taskName);
+
+        TaskServiceMockFactory.mockCreateTaskSuccess(taskName,
+                "{\"taskId\":\"ext-123\",\"status\":\"CREATED\"}");
 
         // When
-        ResponseEntity<String> response = httpGetAndAssert(url, HttpStatus.OK);
+        ResponseEntity<String> response = httpPostAndAssert(url, requestBody, HttpStatus.CREATED);
 
         // Then
         assertThat(response.getHeaders().getFirst("Content-Type")).isEqualTo("application/json");
-        String expected = IOUtils.resourceToString("/test-data/response-success.json", Charsets.UTF_8);
-        JSONAssert.assertEquals(expected, response.getBody(), jsonComparator);
+        assertThat(response.getBody()).contains("\"name\":\"" + taskName + "\"");
+        assertThat(response.getBody()).contains("\"status\":\"PENDING\"");
 
-        // Verify external service was called
-        ExternalServiceMockVerifier.verifyExternalServiceCalled(1, "task-200");
+        // Verify task-service was called
+        TaskServiceMockVerifier.verifyCreateTaskCalled(1, taskName);
     }
 
     @Test
-    void testGetTaskWithProject() throws Exception {
-        // Given
-        String url = "/api/task?task=task-200&projectId=proj-001";
-        ExternalServiceMockFactory.mockExternalServiceSuccess("task-200",
-                "{\"task\":\"EXT.task-200\",\"value\":\"1234567890\"}");
-
-        // When
-        ResponseEntity<String> response = httpGetAndAssert(url, HttpStatus.OK);
-
-        // Then
-        String expected = IOUtils.resourceToString("/test-data/response-with-project.json", Charsets.UTF_8);
-        JSONAssert.assertEquals(expected, response.getBody(), jsonComparator);
-    }
-
-    // ==================== POST Tests ====================
-
-    @ParameterizedTest(name = "Test POST with task-{0}")
-    @CsvSource({"task-200,200", "task-201,200", "task-400,200"})
-    void testPostTask(String task, Integer expectedStatus) throws Exception {
+    void testCreateTaskWithProject() throws Exception {
         // Given
         String url = "/api/task";
-        String requestBody = String.format("{\"task\":\"%s\",\"projectId\":null,\"priority\":1}", task);
+        String requestBody = "{\"name\":\"task-with-project\",\"projectId\":\"proj-001\",\"priority\":5}";
 
-        ExternalServiceMockFactory.mockExternalServicePostSuccess(
-                "{\"task\":\"EXT." + task + "\",\"value\":\"1234567890\"}");
-
-        // When
-        ResponseEntity<String> response = httpPostAndAssert(url, requestBody, HttpStatus.valueOf(expectedStatus));
-
-        // Then
-        assertThat(response.getHeaders().getFirst("Content-Type")).isEqualTo("application/json");
-        assertThat(response.getBody()).contains("DEMO." + task);
-
-        // Verify external service was called
-        ExternalServiceMockVerifier.verifyExternalServicePostCalled(1);
-    }
-
-    @Test
-    void testPostTaskWithProject() throws Exception {
-        // Given
-        String url = "/api/task";
-        String requestBody = "{\"task\":\"task-200\",\"projectId\":\"proj-001\",\"priority\":1}";
-
-        ExternalServiceMockFactory.mockExternalServicePostSuccess(
-                "{\"task\":\"EXT.task-200\",\"value\":\"1234567890\"}");
+        TaskServiceMockFactory.mockCreateTaskSuccess("task-with-project",
+                "{\"taskId\":\"ext-456\",\"status\":\"CREATED\"}");
 
         // When
-        ResponseEntity<String> response = httpPostAndAssert(url, requestBody, HttpStatus.OK);
+        ResponseEntity<String> response = httpPostAndAssert(url, requestBody, HttpStatus.CREATED);
 
         // Then
+        assertThat(response.getBody()).contains("task-with-project");
         assertThat(response.getBody()).contains("proj-001");
-        assertThat(response.getBody()).contains("Demo Project One");
+    }
+
+    @Test
+    void testCreateTaskWithValidationError() throws Exception {
+        // Given
+        String url = "/api/task";
+        String requestBody = "{\"name\":\"\",\"projectId\":null,\"priority\":1}";
+
+        // When
+        ResponseEntity<String> response = httpPost(url, requestBody);
+
+        // Then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+    }
+
+    // ==================== GET Task Tests ====================
+
+    @Test
+    void testGetTaskStatus() throws Exception {
+        // Given - First create a task
+        String createUrl = "/api/task";
+        String createBody = "{\"name\":\"test-task-query\",\"projectId\":null,\"priority\":1}";
+        TaskServiceMockFactory.mockCreateTaskSuccess("test-task-query",
+                "{\"taskId\":\"ext-789\",\"status\":\"CREATED\"}");
+        ResponseEntity<String> createResponse = httpPost(createUrl, createBody);
+        assertThat(createResponse.getStatusCode()).isEqualTo(HttpStatus.CREATED);
+
+        // Extract task ID from response
+        String responseBody = createResponse.getBody();
+        String taskId = responseBody.substring(responseBody.indexOf("\"id\":\"") + 6, responseBody.indexOf("\"", responseBody.indexOf("\"id\":\"") + 6));
+
+        // Mock the status query
+        TaskServiceMockFactory.mockGetTaskStatusSuccess("test-task-query",
+                "{\"taskId\":\"ext-789\",\"status\":\"COMPLETED\"}");
+
+        // When - Get task status
+        String getUrl = "/api/task/" + taskId;
+        ResponseEntity<String> response = httpGetAndAssert(getUrl, HttpStatus.OK);
+
+        // Then
+        assertThat(response.getHeaders().getFirst("Content-Type")).isEqualTo("application/json");
+        assertThat(response.getBody()).contains("PENDING");
+    }
+
+    @Test
+    void testGetTaskNotFound() throws Exception {
+        // Given
+        String url = "/api/task/" + UUID.randomUUID();
+
+        // When
+        ResponseEntity<String> response = httpGet(url);
+
+        // Then
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+    }
+
+    // ==================== GET All Tasks Test ====================
+
+    @Test
+    void testGetAllTasks() throws Exception {
+        // Given
+        String createUrl = "/api/task";
+        String createBody = "{\"name\":\"list-task\",\"projectId\":null,\"priority\":1}";
+        TaskServiceMockFactory.mockCreateTaskSuccess("list-task",
+                "{\"taskId\":\"ext-list\",\"status\":\"CREATED\"}");
+        httpPost(createUrl, createBody);
+
+        // When
+        String url = "/api/tasks";
+        ResponseEntity<String> response = httpGetAndAssert(url, HttpStatus.OK);
+
+        // Then
+        assertThat(response.getBody()).contains("list-task");
     }
 }

@@ -8,35 +8,38 @@ import org.skyscreamer.jsonassert.comparator.JSONComparator;
 
 /**
  * Factory for creating JSON comparators with custom matching rules.
- * Useful for ignoring dynamic fields like timestamps during assertion.
+ * Useful for ignoring dynamic fields during assertion.
  */
 public class JSONComparatorFactory {
 
     /**
      * Creates a JSON comparator for API response validation.
-     * Ignores dynamic fields: timestamp, currentTimeMillis, and downstream.value
+     * Ignores dynamic fields like timestamps and IDs.
      *
      * @return JSONComparator with custom matching rules
      */
     public static JSONComparator buildApiResponseComparator() {
-        // Ignore timestamp field (matches any value)
+        // Ignore timestamp fields (matches any value)
         Customization timestamp = Customization.customization("timestamp",
                 new RegularExpressionValueMatcher<>(".*"));
 
-        // Ignore downstream.value (numeric)
-        Customization downstreamValue = Customization.customization("**.downstream.value",
-                new RegularExpressionValueMatcher<>("\\d+"));
+        // Ignore any field that contains "At" (createdAt, updatedAt)
+        Customization createdAt = Customization.customization("createdAt",
+                new RegularExpressionValueMatcher<>(".*"));
 
-        // Ignore currentTimeMillis (numeric)
-        Customization currentTimeMillis = Customization.customization("currentTimeMillis",
-                new RegularExpressionValueMatcher<>("\\d+"));
+        Customization updatedAt = Customization.customization("updatedAt",
+                new RegularExpressionValueMatcher<>(".*"));
 
-        // Ignore project.id for dynamic IDs
-        Customization projectId = Customization.customization("project.id",
+        // Ignore ID fields (UUID generated)
+        Customization id = Customization.customization("id",
                 new RegularExpressionValueMatcher<>("[\\w-]+"));
 
+        // Ignore downstream response (dynamic)
+        Customization downstreamResponse = Customization.customization("downstreamResponse",
+                new RegularExpressionValueMatcher<>(".*"));
+
         return new CustomComparator(JSONCompareMode.LENIENT,
-                timestamp, downstreamValue, currentTimeMillis, projectId);
+                timestamp, createdAt, updatedAt, id, downstreamResponse);
     }
 
     /**

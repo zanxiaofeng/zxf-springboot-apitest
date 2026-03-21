@@ -5,10 +5,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import zxf.springboot.demo.model.ApiResponse;
+import zxf.springboot.demo.model.Task;
 import zxf.springboot.demo.model.TaskRequest;
 import zxf.springboot.demo.service.DatabaseService;
-import zxf.springboot.demo.service.DemoService;
+import zxf.springboot.demo.service.TaskService;
 
 import java.util.List;
 import java.util.Map;
@@ -19,7 +19,7 @@ import java.util.Map;
 public class DemoController {
 
     @Autowired
-    private DemoService demoService;
+    private TaskService taskService;
 
     @Autowired
     private DatabaseService databaseService;
@@ -30,24 +30,55 @@ public class DemoController {
 
     // ==================== Task Endpoints ====================
 
-    @GetMapping("/task")
-    public ApiResponse getTask(@RequestParam String task,
-                               @RequestParam(required = false) String projectId) {
-        log.info("::getTask - task: {}, projectId: {}", task, projectId);
-        return demoService.processTask(task, projectId);
+    /**
+     * POST /api/task - Create a new task
+     */
+    @PostMapping("/task")
+    public ResponseEntity<?> createTask(@RequestBody TaskRequest request) {
+        log.info("::createTask - name: {}, projectId: {}", request.getName(), request.getProjectId());
+
+        if (request.getName() == null || request.getName().isBlank()) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "name is required"));
+        }
+
+        Task task = taskService.createTask(
+            request.getName(),
+            request.getProjectId(),
+            request.getPriority()
+        );
+
+        return ResponseEntity.status(HttpStatus.CREATED).body(task);
     }
 
-    @PostMapping("/task")
-    public ApiResponse postTask(@RequestBody TaskRequest request) {
-        log.info("::postTask - task: {}, projectId: {}", request.getTask(), request.getProjectId());
-        return demoService.postTask(request.getTask(), Map.of("priority", request.getPriority()), request.getProjectId());
+    /**
+     * GET /api/task/{id} - Query task status
+     */
+    @GetMapping("/task/{id}")
+    public ResponseEntity<?> getTaskStatus(@PathVariable String id) {
+        log.info("::getTaskStatus - id: {}", id);
+
+        try {
+            Task task = taskService.getTaskStatus(id);
+            return ResponseEntity.ok(task);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "Task not found", "id", id));
+        }
+    }
+
+    /**
+     * GET /api/tasks - Get all tasks
+     */
+    @GetMapping("/tasks")
+    public ResponseEntity<List<Task>> getAllTasks() {
+        log.info("::getAllTasks");
+        List<Task> tasks = taskService.getAllTasks();
+        return ResponseEntity.ok(tasks);
     }
 
     // ==================== Project CRUD Endpoints ====================
 
-    /**
-     * GET /api/projects - 查询所有项目
-     */
     @GetMapping("/projects")
     public ResponseEntity<List<Map<String, Object>>> getAllProjects() {
         log.info("::getAllProjects");
@@ -55,9 +86,6 @@ public class DemoController {
         return ResponseEntity.ok(projects);
     }
 
-    /**
-     * GET /api/projects/{id} - 根据ID查询项目
-     */
     @GetMapping("/projects/{id}")
     public ResponseEntity<?> getProjectById(@PathVariable String id) {
         log.info("::getProjectById - id: {}", id);
@@ -69,9 +97,6 @@ public class DemoController {
         return ResponseEntity.ok(project);
     }
 
-    /**
-     * POST /api/projects - 创建项目
-     */
     @PostMapping("/projects")
     public ResponseEntity<?> createProject(@RequestBody Map<String, String> request) {
         String id = request.get("id");
@@ -83,7 +108,6 @@ public class DemoController {
                     .body(Map.of("error", "id and name are required"));
         }
 
-        // 检查是否已存在
         if (databaseService.queryProjectById(id) != null) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(Map.of("error", "Project already exists", "id", id));
@@ -94,9 +118,6 @@ public class DemoController {
                 .body(databaseService.queryProjectById(id));
     }
 
-    /**
-     * PUT /api/projects/{id} - 更新项目
-     */
     @PutMapping("/projects/{id}")
     public ResponseEntity<?> updateProject(@PathVariable String id,
                                           @RequestBody Map<String, String> request) {
@@ -117,9 +138,6 @@ public class DemoController {
         return ResponseEntity.ok(databaseService.queryProjectById(id));
     }
 
-    /**
-     * DELETE /api/projects/{id} - 删除项目
-     */
     @DeleteMapping("/projects/{id}")
     public ResponseEntity<?> deleteProject(@PathVariable String id) {
         log.info("::deleteProject - id: {}", id);
