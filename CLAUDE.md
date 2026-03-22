@@ -46,8 +46,9 @@ Controller → Service → DatabaseService/TaskService → JdbcTemplate/TaskServ
 |-----------|---------|
 | `BaseApiTest` | Abstract base with HTTP helper methods (`httpGetAndAssert`, `httpPostAndAssert`, etc.) |
 | `JsonLoader` | Loads JSON from `test-data/` with `${variable}` template support |
-| `JSONComparatorFactory` | Creates comparators that ignore dynamic fields (id, timestamp, downstreamResponse) |
+| `JSONComparatorFactory` | Creates comparators that ignore dynamic fields (id, timestamp, externalTaskId) |
 | `TaskServiceMockFactory` | WireMock stubs for external `task-service` |
+| `TaskServiceMockVerifier` | Verifies downstream service was called with expected parameters |
 
 ### Test Data Organization
 

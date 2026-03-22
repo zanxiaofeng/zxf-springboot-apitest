@@ -17,7 +17,7 @@ public final class JSONComparatorFactory {
 
     /**
      * Creates a JSON comparator for API response validation.
-     * Ignores dynamic fields like timestamps, IDs, and downstream responses.
+     * Ignores dynamic fields like timestamps, IDs, and external task IDs.
      *
      * @return JSONComparator with custom matching rules
      */
@@ -31,8 +31,8 @@ public final class JSONComparatorFactory {
                 customization("updated_at"),
                 // Ignore ID fields (UUIDs generated at runtime)
                 customization("id"),
-                // Ignore downstream response (dynamic external service response)
-                customization("downstreamResponse"),
+                // Ignore external task ID (dynamic value from downstream service)
+                customization("externalTaskId"),
                 // Ignore priority (may vary)
                 customization("priority")
         );

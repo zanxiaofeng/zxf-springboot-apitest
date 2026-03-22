@@ -33,11 +33,14 @@ public abstract class BaseApiTest {
     // ==================== GET Methods ====================
 
     /**
-     * Execute HTTP GET request and assert status code.
+     * Execute HTTP GET request and assert status code and content type.
      *
-     * @param url            the request URL
-     * @param expectedStatus expected HTTP status
-     * @return ResponseEntity with String body
+     * @param url                  the request URL
+     * @param requestHeaders       the request headers
+     * @param tClass               the response body type
+     * @param expectedStatus       expected HTTP status
+     * @param expectedContentType  expected content type (null to skip check)
+     * @return ResponseEntity with typed body
      */
     protected <T> ResponseEntity<T> httpGetAndAssert(String url, HttpHeaders requestHeaders, Class<T> tClass, HttpStatus expectedStatus, MediaType expectedContentType) {
         RequestEntity<String> requestEntity = new RequestEntity<>(null, requestHeaders, HttpMethod.GET, URI.create(url));
@@ -52,12 +55,15 @@ public abstract class BaseApiTest {
     // ==================== POST Methods ====================
 
     /**
-     * Execute HTTP POST request and assert status code.
+     * Execute HTTP POST request and assert status code and content type.
      *
-     * @param url            the request URL
-     * @param requestBody    the request body as JSON string
-     * @param expectedStatus expected HTTP status
-     * @return ResponseEntity with String body
+     * @param url                  the request URL
+     * @param requestHeaders       the request headers
+     * @param requestBody          the request body as JSON string
+     * @param tClass               the response body type
+     * @param expectedStatus       expected HTTP status
+     * @param expectedContentType  expected content type (null to skip check)
+     * @return ResponseEntity with typed body
      */
     protected <T> ResponseEntity<T> httpPostAndAssert(String url, HttpHeaders requestHeaders, String requestBody, Class<T> tClass, HttpStatus expectedStatus, MediaType expectedContentType) {
         RequestEntity<String> requestEntity = new RequestEntity<>(requestBody, requestHeaders, HttpMethod.POST, URI.create(url));
@@ -72,12 +78,15 @@ public abstract class BaseApiTest {
     // ==================== PUT Methods ====================
 
     /**
-     * Execute HTTP PUT request and assert status code.
+     * Execute HTTP PUT request and assert status code and content type.
      *
-     * @param url            the request URL
-     * @param requestBody    the request body as JSON string
-     * @param expectedStatus expected HTTP status
-     * @return ResponseEntity with String body
+     * @param url                  the request URL
+     * @param requestHeaders       the request headers
+     * @param requestBody          the request body as JSON string
+     * @param tClass               the response body type
+     * @param expectedStatus       expected HTTP status
+     * @param expectedContentType  expected content type (null to skip check)
+     * @return ResponseEntity with typed body
      */
     protected <T> ResponseEntity<T> httpPutAndAssert(String url, HttpHeaders requestHeaders, String requestBody, Class<T> tClass, HttpStatus expectedStatus, MediaType expectedContentType) {
         RequestEntity<String> requestEntity = new RequestEntity<>(requestBody, requestHeaders, HttpMethod.PUT, URI.create(url));
@@ -92,11 +101,14 @@ public abstract class BaseApiTest {
     // ==================== DELETE Methods ====================
 
     /**
-     * Execute HTTP DELETE request and assert status code.
+     * Execute HTTP DELETE request and assert status code and content type.
      *
-     * @param url            the request URL
-     * @param expectedStatus expected HTTP status
-     * @return ResponseEntity with String body
+     * @param url                  the request URL
+     * @param requestHeaders       the request headers
+     * @param tClass               the response body type
+     * @param expectedStatus       expected HTTP status
+     * @param expectedContentType  expected content type (null to skip check)
+     * @return ResponseEntity with typed body
      */
     protected <T> ResponseEntity<T> httpDeleteAndAssert(String url, HttpHeaders requestHeaders, Class<T> tClass, HttpStatus expectedStatus, MediaType expectedContentType) {
         RequestEntity<String> requestEntity = new RequestEntity<>(null, requestHeaders, HttpMethod.DELETE, URI.create(url));
@@ -108,11 +120,20 @@ public abstract class BaseApiTest {
         return responseEntity;
     }
 
+    /**
+     * Creates common HTTP headers for requests.
+     *
+     * @return HttpHeaders with default settings
+     */
     protected HttpHeaders commonHeaders() {
-        HttpHeaders headers = new HttpHeaders();
-        return headers;
+        return new HttpHeaders();
     }
 
+    /**
+     * Creates HTTP headers with JSON content type.
+     *
+     * @return HttpHeaders with Content-Type: application/json
+     */
     protected HttpHeaders commonHeadersAndJson() {
         HttpHeaders headers = commonHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
