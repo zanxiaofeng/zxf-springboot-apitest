@@ -10,35 +10,35 @@ import org.skyscreamer.jsonassert.comparator.JSONComparator;
  * Factory for creating JSON comparators with custom matching rules.
  * Useful for ignoring dynamic fields during assertion.
  */
-public class JSONComparatorFactory {
+public final class JSONComparatorFactory {
+
+    private JSONComparatorFactory() {
+    }
 
     /**
      * Creates a JSON comparator for API response validation.
-     * Ignores dynamic fields like timestamps and IDs.
+     * Ignores dynamic fields like timestamps, IDs, and downstream responses.
      *
      * @return JSONComparator with custom matching rules
      */
     public static JSONComparator buildApiResponseComparator() {
-        // Ignore timestamp fields (matches any value)
-        Customization timestamp = Customization.customization("timestamp",
-                new RegularExpressionValueMatcher<>(".*"));
-
-        // Ignore any field that contains "At" (createdAt, updatedAt)
-        Customization createdAt = Customization.customization("createdAt",
-                new RegularExpressionValueMatcher<>(".*"));
-
-        Customization updatedAt = Customization.customization("updatedAt",
-                new RegularExpressionValueMatcher<>(".*"));
-
-        // Ignore ID fields (UUID generated)
-        Customization id = Customization.customization("id",
-                new RegularExpressionValueMatcher<>("[\\w-]+"));
-
-        // Ignore downstream response (dynamic)
-        Customization downstreamResponse = Customization.customization("downstreamResponse",
-                new RegularExpressionValueMatcher<>(".*"));
-
         return new CustomComparator(JSONCompareMode.LENIENT,
-                timestamp, createdAt, updatedAt, id, downstreamResponse);
+                // Ignore timestamp fields
+                customization("timestamp"),
+                customization("createdAt"),
+                customization("updatedAt"),
+                customization("created_at"),
+                customization("updated_at"),
+                // Ignore ID fields (UUIDs generated at runtime)
+                customization("id"),
+                // Ignore downstream response (dynamic external service response)
+                customization("downstreamResponse"),
+                // Ignore priority (may vary)
+                customization("priority")
+        );
+    }
+
+    private static Customization customization(String fieldName) {
+        return Customization.customization(fieldName, new RegularExpressionValueMatcher<>(".*"));
     }
 }

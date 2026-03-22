@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.comparator.JSONComparator;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -11,6 +12,7 @@ import org.wiremock.spring.ConfigureWireMock;
 import org.wiremock.spring.EnableWireMock;
 import zxf.springboot.demo.apitest.support.BaseApiTest;
 import zxf.springboot.demo.apitest.support.json.JSONComparatorFactory;
+import zxf.springboot.demo.apitest.support.json.JsonLoader;
 import zxf.springboot.demo.apitest.support.mocks.TaskServiceMockFactory;
 
 import java.io.IOException;
@@ -56,8 +58,8 @@ public class TaskApiTests extends BaseApiTest {
 
         // Then
         assertThat(response.getHeaders().getFirst("Content-Type")).isEqualTo("application/json");
-        assertThat(response.getBody()).contains("\"name\":\"" + taskName + "\"");
-        assertThat(response.getBody()).contains("\"status\":\"PENDING\"");
+        String expectedJson = JsonLoader.load("task/post-task-created.json");
+        JSONAssert.assertEquals(expectedJson, response.getBody(), taskApiJsonResponseComparator);
     }
 
     @Test
@@ -73,8 +75,8 @@ public class TaskApiTests extends BaseApiTest {
         ResponseEntity<String> response = httpPostAndAssert(url, requestBody, HttpStatus.CREATED);
 
         // Then
-        assertThat(response.getBody()).contains("task-with-project");
-        assertThat(response.getBody()).contains("proj-001");
+        String expectedJson = JsonLoader.load("task/post-task-created.json");
+        JSONAssert.assertEquals(expectedJson, response.getBody(), taskApiJsonResponseComparator);
     }
 
     @Test
@@ -83,8 +85,12 @@ public class TaskApiTests extends BaseApiTest {
         String url = "/api/tasks";
         String requestBody = "{\"name\":\"\",\"projectId\":null,\"priority\":1}";
 
-        // When & Then
-        httpPostAndAssert(url, requestBody, HttpStatus.BAD_REQUEST);
+        // When
+        ResponseEntity<String> response = httpPostAndAssert(url, requestBody, HttpStatus.BAD_REQUEST);
+
+        // Then
+        String expectedJson = JsonLoader.load("task/post-task-validation-error.json");
+        JSONAssert.assertEquals(expectedJson, response.getBody(), taskApiJsonResponseComparator);
     }
 
     // ==================== GET /api/tasks/{id} Tests ====================
@@ -103,8 +109,8 @@ public class TaskApiTests extends BaseApiTest {
 
         // Then
         assertThat(response.getHeaders().getFirst("Content-Type")).isEqualTo("application/json");
-        assertThat(response.getBody()).contains("task-001");
-        assertThat(response.getBody()).contains("Test Task One");
+        String expectedJson = JsonLoader.load("task/get-task-by-id.json");
+        JSONAssert.assertEquals(expectedJson, response.getBody(), taskApiJsonResponseComparator);
     }
 
     @Test
@@ -112,8 +118,12 @@ public class TaskApiTests extends BaseApiTest {
         // Given
         String url = "/api/tasks/non-existent-task-id";
 
-        // When & Then
-        httpGetAndAssert(url, HttpStatus.NOT_FOUND);
+        // When
+        ResponseEntity<String> response = httpGetAndAssert(url, HttpStatus.NOT_FOUND);
+
+        // Then
+        String expectedJson = JsonLoader.load("task/get-task-not-found.json");
+        JSONAssert.assertEquals(expectedJson, response.getBody(), taskApiJsonResponseComparator);
     }
 
     // ==================== GET /api/tasks Tests ====================
@@ -127,7 +137,7 @@ public class TaskApiTests extends BaseApiTest {
         ResponseEntity<String> response = httpGetAndAssert(url, HttpStatus.OK);
 
         // Then
-        assertThat(response.getBody()).contains("task-001");
-        assertThat(response.getBody()).contains("task-002");
+        String expectedJson = JsonLoader.load("task/get-all-tasks.json");
+        JSONAssert.assertEquals(expectedJson, response.getBody(), taskApiJsonResponseComparator);
     }
 }

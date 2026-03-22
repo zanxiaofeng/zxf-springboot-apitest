@@ -1,8 +1,8 @@
 package zxf.springboot.demo.apitest;
 
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.comparator.JSONComparator;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -10,6 +10,7 @@ import org.wiremock.spring.ConfigureWireMock;
 import org.wiremock.spring.EnableWireMock;
 import zxf.springboot.demo.apitest.support.BaseApiTest;
 import zxf.springboot.demo.apitest.support.json.JSONComparatorFactory;
+import zxf.springboot.demo.apitest.support.json.JsonLoader;
 
 import java.io.IOException;
 
@@ -22,6 +23,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * - Uses WireMock to mock external services
  * - Uses H2 in-memory database
  * - Uses TestRestTemplate for HTTP calls
+ * - Uses JSONAssert for response validation
  * - Each test method tests only ONE endpoint
  */
 @EnableWireMock({
@@ -48,8 +50,8 @@ public class ProjectApiTests extends BaseApiTest {
 
         // Then
         assertThat(response.getHeaders().getFirst("Content-Type")).isEqualTo("application/json");
-        assertThat(response.getBody()).contains("proj-new");
-        assertThat(response.getBody()).contains("New Project");
+        String expectedJson = JsonLoader.load("project/post-project-created.json");
+        JSONAssert.assertEquals(expectedJson, response.getBody(), projectApiJsonResponseComparator);
     }
 
     @Test
@@ -58,8 +60,12 @@ public class ProjectApiTests extends BaseApiTest {
         String url = "/api/projects";
         String requestBody = "{\"id\":\"\",\"name\":\"\"}";
 
-        // When & Then
-        httpPostAndAssert(url, requestBody, HttpStatus.BAD_REQUEST);
+        // When
+        ResponseEntity<String> response = httpPostAndAssert(url, requestBody, HttpStatus.BAD_REQUEST);
+
+        // Then
+        String expectedJson = JsonLoader.load("project/post-project-validation-error.json");
+        JSONAssert.assertEquals(expectedJson, response.getBody(), projectApiJsonResponseComparator);
     }
 
     @Test
@@ -68,8 +74,12 @@ public class ProjectApiTests extends BaseApiTest {
         String url = "/api/projects";
         String requestBody = "{\"id\":\"proj-001\",\"name\":\"Duplicate Project\"}";
 
-        // When & Then
-        httpPostAndAssert(url, requestBody, HttpStatus.CONFLICT);
+        // When
+        ResponseEntity<String> response = httpPostAndAssert(url, requestBody, HttpStatus.CONFLICT);
+
+        // Then
+        String expectedJson = JsonLoader.load("project/post-project-conflict.json");
+        JSONAssert.assertEquals(expectedJson, response.getBody(), projectApiJsonResponseComparator);
     }
 
     // ==================== GET /api/projects/{id} Tests ====================
@@ -84,8 +94,8 @@ public class ProjectApiTests extends BaseApiTest {
 
         // Then
         assertThat(response.getHeaders().getFirst("Content-Type")).isEqualTo("application/json");
-        assertThat(response.getBody()).contains("proj-001");
-        assertThat(response.getBody()).contains("Demo Project One");
+        String expectedJson = JsonLoader.load("project/get-project-by-id.json");
+        JSONAssert.assertEquals(expectedJson, response.getBody(), projectApiJsonResponseComparator);
     }
 
     @Test
@@ -93,8 +103,12 @@ public class ProjectApiTests extends BaseApiTest {
         // Given
         String url = "/api/projects/non-existent-id";
 
-        // When & Then
-        httpGetAndAssert(url, HttpStatus.NOT_FOUND);
+        // When
+        ResponseEntity<String> response = httpGetAndAssert(url, HttpStatus.NOT_FOUND);
+
+        // Then
+        String expectedJson = JsonLoader.load("project/get-project-not-found.json");
+        JSONAssert.assertEquals(expectedJson, response.getBody(), projectApiJsonResponseComparator);
     }
 
     // ==================== GET /api/projects Tests ====================
@@ -108,8 +122,8 @@ public class ProjectApiTests extends BaseApiTest {
         ResponseEntity<String> response = httpGetAndAssert(url, HttpStatus.OK);
 
         // Then
-        assertThat(response.getBody()).contains("proj-001");
-        assertThat(response.getBody()).contains("proj-002");
+        String expectedJson = JsonLoader.load("project/get-all-projects.json");
+        JSONAssert.assertEquals(expectedJson, response.getBody(), projectApiJsonResponseComparator);
     }
 
     // ==================== PUT /api/projects/{id} Tests ====================
@@ -124,8 +138,8 @@ public class ProjectApiTests extends BaseApiTest {
         ResponseEntity<String> response = httpPutAndAssert(url, requestBody, HttpStatus.OK);
 
         // Then
-        assertThat(response.getBody()).contains("proj-001");
-        assertThat(response.getBody()).contains("Updated Project Name");
+        String expectedJson = JsonLoader.load("project/put-project-updated.json");
+        JSONAssert.assertEquals(expectedJson, response.getBody(), projectApiJsonResponseComparator);
     }
 
     @Test
@@ -134,8 +148,12 @@ public class ProjectApiTests extends BaseApiTest {
         String url = "/api/projects/non-existent-id";
         String requestBody = "{\"name\":\"Updated Name\"}";
 
-        // When & Then
-        httpPutAndAssert(url, requestBody, HttpStatus.NOT_FOUND);
+        // When
+        ResponseEntity<String> response = httpPutAndAssert(url, requestBody, HttpStatus.NOT_FOUND);
+
+        // Then
+        String expectedJson = JsonLoader.load("project/put-project-not-found.json");
+        JSONAssert.assertEquals(expectedJson, response.getBody(), projectApiJsonResponseComparator);
     }
 
     @Test
@@ -144,8 +162,12 @@ public class ProjectApiTests extends BaseApiTest {
         String url = "/api/projects/proj-001";
         String requestBody = "{\"name\":\"\"}";
 
-        // When & Then
-        httpPutAndAssert(url, requestBody, HttpStatus.BAD_REQUEST);
+        // When
+        ResponseEntity<String> response = httpPutAndAssert(url, requestBody, HttpStatus.BAD_REQUEST);
+
+        // Then
+        String expectedJson = JsonLoader.load("project/put-project-validation-error.json");
+        JSONAssert.assertEquals(expectedJson, response.getBody(), projectApiJsonResponseComparator);
     }
 
     // ==================== DELETE /api/projects/{id} Tests ====================
@@ -155,11 +177,8 @@ public class ProjectApiTests extends BaseApiTest {
         // Given - 使用预置数据 proj-delete
         String url = "/api/projects/proj-delete";
 
-        // When
-        ResponseEntity<String> response = httpDeleteAndAssert(url, HttpStatus.NO_CONTENT);
-
-        // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NO_CONTENT);
+        // When & Then
+        httpDeleteAndAssert(url, HttpStatus.NO_CONTENT);
     }
 
     @Test

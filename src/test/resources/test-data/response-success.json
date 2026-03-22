@@ -1,9 +1,0 @@
-{
-  "task": "DEMO.task-200",
-  "downstream": {
-    "task": "EXT.task-200",
-    "value": "1234567890"
-  },
-  "currentTimeMillis": 123456789,
-  "timestamp": "2024-01-01T00:00:00Z"
-}

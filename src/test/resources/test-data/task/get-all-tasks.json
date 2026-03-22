@@ -1,0 +1,23 @@
+[
+  {
+    "id": "task-001",
+    "name": "Test Task One",
+    "status": "PENDING",
+    "projectId": "proj-001",
+    "priority": 1
+  },
+  {
+    "id": "task-002",
+    "name": "Test Task Two",
+    "status": "COMPLETED",
+    "projectId": "proj-001",
+    "priority": 2
+  },
+  {
+    "id": "task-list",
+    "name": "List Test Task",
+    "status": "PENDING",
+    "projectId": null,
+    "priority": 1
+  }
+]

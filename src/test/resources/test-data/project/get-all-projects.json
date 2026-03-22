@@ -1,0 +1,14 @@
+[
+  {
+    "id": "proj-001",
+    "name": "Demo Project One"
+  },
+  {
+    "id": "proj-002",
+    "name": "Demo Project Two"
+  },
+  {
+    "id": "proj-delete",
+    "name": "Project To Delete"
+  }
+]

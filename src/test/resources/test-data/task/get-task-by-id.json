@@ -1,0 +1,7 @@
+{
+  "id": "task-001",
+  "name": "Test Task One",
+  "status": "PENDING",
+  "projectId": "proj-001",
+  "priority": 1
+}
