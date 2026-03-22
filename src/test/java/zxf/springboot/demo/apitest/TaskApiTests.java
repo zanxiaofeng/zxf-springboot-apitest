@@ -25,7 +25,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Task API Tests.
  *
  * Features:
- * - Uses WireMock to mock task-service
+ * - Uses WireMock to mock task-service (async task processor)
  * - Uses H2 in-memory database
  * - Uses TestRestTemplate for HTTP calls
  * - Uses JSONAssert for response validation
@@ -54,7 +54,7 @@ public class TaskApiTests extends BaseApiTest {
                 Map.of("name", taskName, "projectId", "null", "priority", "1"));
 
         TaskServiceMockFactory.mockCreateTaskSuccess(
-                "{\"taskId\":\"ext-123\",\"status\":\"CREATED\"}");
+                "{\"taskId\":\"ext-123\",\"status\":\"ACCEPTED\"}");
 
         int initialCount = databaseVerifier.countTasks();
 
@@ -71,7 +71,7 @@ public class TaskApiTests extends BaseApiTest {
         assertThat(taskId).isNotNull();
         assertThat(databaseVerifier.getTaskPriority(taskId)).isEqualTo(1);
 
-        // And - verify downstream service was called
+        // And - verify downstream async processor was called
         TaskServiceMockVerifier.verifyCreateTaskCalled(1);
     }
 
@@ -84,7 +84,7 @@ public class TaskApiTests extends BaseApiTest {
                 Map.of("name", taskName, "projectId", "\"proj-001\"", "priority", "5"));
 
         TaskServiceMockFactory.mockCreateTaskSuccess(
-                "{\"taskId\":\"ext-456\",\"status\":\"CREATED\"}");
+                "{\"taskId\":\"ext-456\",\"status\":\"ACCEPTED\"}");
 
         int initialCount = databaseVerifier.countTasks();
 
@@ -101,7 +101,7 @@ public class TaskApiTests extends BaseApiTest {
         assertThat(taskId).isNotNull();
         assertThat(databaseVerifier.getTaskPriority(taskId)).isEqualTo(5);
 
-        // And - verify downstream service was called
+        // And - verify downstream async processor was called
         TaskServiceMockVerifier.verifyCreateTaskCalled(1);
     }
 
@@ -132,7 +132,7 @@ public class TaskApiTests extends BaseApiTest {
 
     @Test
     void testGetTaskById() throws Exception {
-        // Given - 使用预置数据 task-001，静态 mock 由 WireMock 从 mock-data/ 加载
+        // Given - 使用预置数据 task-001
         String taskId = "task-001";
         String url = "/api/tasks/" + taskId;
 
@@ -142,9 +142,6 @@ public class TaskApiTests extends BaseApiTest {
         // Then
         String expectedJson = JsonLoader.load("task/get-by-id/ok.json");
         JSONAssert.assertEquals(expectedJson, response.getBody(), taskApiJsonResponseComparator);
-
-        // And - verify downstream service was called with task ID
-        TaskServiceMockVerifier.verifyGetTaskStatusCalled(1, taskId);
     }
 
     @Test
@@ -158,9 +155,6 @@ public class TaskApiTests extends BaseApiTest {
         // Then
         String expectedJson = JsonLoader.load("task/get-by-id/not-found.json");
         JSONAssert.assertEquals(expectedJson, response.getBody(), taskApiJsonResponseComparator);
-
-        // And - verify downstream service was NOT called (task not found in DB)
-        TaskServiceMockVerifier.verifyGetTaskStatusCalled(0, "non-existent-task-id");
     }
 
     // ==================== GET /api/tasks Tests ====================
@@ -176,5 +170,98 @@ public class TaskApiTests extends BaseApiTest {
         // Then
         String expectedJson = JsonLoader.load("task/get-all/ok.json");
         JSONAssert.assertEquals(expectedJson, response.getBody(), taskApiJsonResponseComparator);
+    }
+
+    // ==================== PUT /api/tasks/{id} Tests ====================
+
+    @Test
+    void testUpdateTask() throws Exception {
+        // Given - 使用预置数据 task-001
+        String taskId = "task-001";
+        String url = "/api/tasks/" + taskId;
+        String requestBody = JsonLoader.load("task/put/request.json", Map.of());
+
+        TaskServiceMockFactory.mockUpdateTaskSuccess(taskId,
+                "{\"taskId\":\"ext-789\",\"status\":\"UPDATED\"}");
+
+        // When
+        ResponseEntity<String> response = httpPutAndAssert(url, commonHeadersAndJson(), requestBody, String.class, HttpStatus.OK, MediaType.APPLICATION_JSON);
+
+        // Then
+        String expectedJson = JsonLoader.load("task/put/ok.json");
+        JSONAssert.assertEquals(expectedJson, response.getBody(), taskApiJsonResponseComparator);
+
+        // And - verify downstream service was called
+        TaskServiceMockVerifier.verifyUpdateTaskCalled(1, taskId);
+    }
+
+    @Test
+    void testUpdateTaskNotFound() throws Exception {
+        // Given
+        String taskId = "non-existent-task-id";
+        String url = "/api/tasks/" + taskId;
+        String requestBody = JsonLoader.load("task/put/request.json", Map.of());
+
+        TaskServiceMockFactory.mockUpdateTaskSuccess(taskId,
+                "{\"taskId\":\"ext-xxx\",\"status\":\"UPDATED\"}");
+
+        // When
+        ResponseEntity<String> response = httpPutAndAssert(url, commonHeadersAndJson(), requestBody, String.class, HttpStatus.NOT_FOUND, MediaType.APPLICATION_JSON);
+
+        // Then
+        String expectedJson = JsonLoader.load("task/put/not-found.json");
+        JSONAssert.assertEquals(expectedJson, response.getBody(), taskApiJsonResponseComparator);
+
+        // And - verify downstream service was NOT called (task not found in DB)
+        TaskServiceMockVerifier.verifyUpdateTaskCalled(0, taskId);
+    }
+
+    // ==================== DELETE /api/tasks/{id} Tests ====================
+
+    @Test
+    void testDeleteTask() throws Exception {
+        // Given - 使用预置数据 task-002
+        String taskId = "task-002";
+        String url = "/api/tasks/" + taskId;
+
+        TaskServiceMockFactory.mockDeleteTaskSuccess(taskId);
+
+        int initialCount = databaseVerifier.countTasks();
+
+        // When
+        ResponseEntity<String> response = httpDeleteAndAssert(url, commonHeaders(), String.class, HttpStatus.NO_CONTENT, null);
+
+        // Then - verify response has no content
+        assertThat(response.getBody()).isNull();
+
+        // And - verify database state
+        assertThat(databaseVerifier.countTasks()).isEqualTo(initialCount - 1);
+
+        // And - verify downstream service was called
+        TaskServiceMockVerifier.verifyDeleteTaskCalled(1, taskId);
+    }
+
+    @Test
+    void testDeleteTaskNotFound() throws Exception {
+        // Given
+        String taskId = "non-existent-task-id";
+        String url = "/api/tasks/" + taskId;
+
+        TaskServiceMockFactory.mockDeleteTaskSuccess(taskId);
+
+        int initialCount = databaseVerifier.countTasks();
+
+        // When
+        ResponseEntity<String> response = httpDeleteAndAssert(url, commonHeaders(), String.class, HttpStatus.NOT_FOUND, MediaType.APPLICATION_JSON);
+
+        // Then
+        String expectedJson = JsonLoader.load("task/delete/not-found.json");
+        JSONAssert.assertEquals(expectedJson, response.getBody(), taskApiJsonResponseComparator);
+
+        // And - verify database state unchanged
+        assertThat(databaseVerifier.countTasks()).isEqualTo(initialCount);
+
+        // And - verify downstream service was NOT called
+        TaskServiceMockVerifier.verifyDeleteTaskCalled(0, taskId);
     }
 }

@@ -13,6 +13,10 @@ import zxf.springboot.demo.service.TaskService;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * REST Controller for task management.
+ * Tasks are processed asynchronously by the downstream task-service.
+ */
 @Slf4j
 @RestController
 @RequestMapping("/api/tasks")
@@ -42,13 +46,13 @@ public class TaskController {
     }
 
     /**
-     * GET /api/tasks/{id} - Query task status
+     * GET /api/tasks/{id} - Get task by ID
      */
     @GetMapping("/{id}")
-    public ResponseEntity<?> getTaskStatus(@PathVariable String id) {
-        log.info("::getTaskStatus - id: {}", id);
+    public ResponseEntity<?> getTaskById(@PathVariable String id) {
+        log.info("::getTaskById - id: {}", id);
 
-        Task task = taskService.getTaskStatus(id);
+        Task task = taskService.getTaskById(id);
         if (task == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("error", "Task not found", "id", id));
@@ -64,5 +68,40 @@ public class TaskController {
         log.info("::getAllTasks");
         List<Task> tasks = taskService.getAllTasks();
         return ResponseEntity.ok(tasks);
+    }
+
+    /**
+     * PUT /api/tasks/{id} - Update a task
+     */
+    @PutMapping("/{id}")
+    public ResponseEntity<?> updateTask(@PathVariable String id, @RequestBody TaskRequest request) {
+        log.info("::updateTask - id: {}, name: {}", id, request.getName());
+
+        if (StringUtils.isBlank(request.getName())) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("error", "name is required"));
+        }
+
+        Task task = taskService.updateTask(id, request.getName(), request.getPriority());
+        if (task == null) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "Task not found", "id", id));
+        }
+        return ResponseEntity.ok(task);
+    }
+
+    /**
+     * DELETE /api/tasks/{id} - Delete a task
+     */
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteTask(@PathVariable String id) {
+        log.info("::deleteTask - id: {}", id);
+
+        boolean deleted = taskService.deleteTask(id);
+        if (!deleted) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(Map.of("error", "Task not found", "id", id));
+        }
+        return ResponseEntity.noContent().build();
     }
 }

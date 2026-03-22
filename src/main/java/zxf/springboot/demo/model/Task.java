@@ -5,8 +5,10 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.Map;
-
+/**
+ * Task entity representing a task in the system.
+ * Tasks are processed asynchronously by the downstream task-service.
+ */
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
@@ -17,5 +19,9 @@ public class Task {
     private String status;
     private String projectId;
     private Integer priority;
-    private Map<String, Object> downstreamResponse;
+    /**
+     * External task ID returned from downstream task-service.
+     * Used to correlate with the async processor.
+     */
+    private String externalTaskId;
 }

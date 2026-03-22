@@ -8,15 +8,11 @@ import static com.github.tomakehurst.wiremock.client.WireMock.*;
 
 /**
  * Verifier for checking that task-service was called with expected parameters.
- * Used in Server Mode tests to verify HTTP request details.
  */
 public class TaskServiceMockVerifier {
 
     /**
      * Verifies that task-service create API was called expected number of times.
-     * Does not verify specific task ID (for tests where ID is dynamically generated).
-     *
-     * @param calledCount expected number of calls
      */
     public static void verifyCreateTaskCalled(int calledCount) {
         WireMock.verify(calledCount, postRequestedFor(urlEqualTo("/tasks"))
@@ -25,10 +21,7 @@ public class TaskServiceMockVerifier {
     }
 
     /**
-     * Verifies that task-service create API was called expected number of times.
-     *
-     * @param calledCount expected number of calls
-     * @param taskId      the task ID expected
+     * Verifies that task-service create API was called for a specific task ID.
      */
     public static void verifyCreateTaskCalled(int calledCount, String taskId) {
         WireMock.verify(calledCount, postRequestedFor(urlEqualTo("/tasks"))
@@ -37,12 +30,17 @@ public class TaskServiceMockVerifier {
     }
 
     /**
-     * Verifies that task-service get status API was called expected number of times.
-     *
-     * @param calledCount expected number of calls
-     * @param taskId      the task ID expected
+     * Verifies that task-service update API was called expected number of times.
      */
-    public static void verifyGetTaskStatusCalled(int calledCount, String taskId) {
-        WireMock.verify(calledCount, getRequestedFor(urlEqualTo("/tasks/" + taskId + "/status")));
+    public static void verifyUpdateTaskCalled(int calledCount, String taskId) {
+        WireMock.verify(calledCount, putRequestedFor(urlEqualTo("/tasks/" + taskId))
+                .withHeader(HttpHeaders.CONTENT_TYPE, equalTo(MediaType.APPLICATION_JSON_VALUE)));
+    }
+
+    /**
+     * Verifies that task-service delete API was called expected number of times.
+     */
+    public static void verifyDeleteTaskCalled(int calledCount, String taskId) {
+        WireMock.verify(calledCount, deleteRequestedFor(urlEqualTo("/tasks/" + taskId)));
     }
 }

@@ -11,6 +11,7 @@ CREATE TABLE IF NOT EXISTS task (
     status VARCHAR(20) NOT NULL DEFAULT 'PENDING',
     project_id VARCHAR(40),
     priority INT DEFAULT 0,
+    external_task_id VARCHAR(40),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );

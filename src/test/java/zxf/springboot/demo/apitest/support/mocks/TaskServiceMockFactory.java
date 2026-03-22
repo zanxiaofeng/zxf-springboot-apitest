@@ -8,15 +8,12 @@ import static com.github.tomakehurst.wiremock.client.WireMock.*;
 
 /**
  * Factory for creating WireMock stubs for task-service simulation.
- * Used in Server Mode tests to mock downstream task-service responses.
+ * The task-service acts as an async task processor.
  */
 public class TaskServiceMockFactory {
 
     /**
      * Mocks a successful task creation response from task-service.
-     * Matches any task ID (for tests where ID is dynamically generated).
-     *
-     * @param response the mock response body
      */
     public static void mockCreateTaskSuccess(String response) {
         WireMock.stubFor(WireMock.post(urlEqualTo("/tasks"))
@@ -29,10 +26,7 @@ public class TaskServiceMockFactory {
     }
 
     /**
-     * Mocks a successful task creation response from task-service.
-     *
-     * @param taskId the task ID
-     * @param response the mock response body
+     * Mocks a successful task creation response for a specific task ID.
      */
     public static void mockCreateTaskSuccess(String taskId, String response) {
         WireMock.stubFor(WireMock.post(urlEqualTo("/tasks"))
@@ -45,16 +39,23 @@ public class TaskServiceMockFactory {
     }
 
     /**
-     * Mocks a successful task status query response from task-service.
-     *
-     * @param taskId the task ID
-     * @param response the mock response body
+     * Mocks a successful task update response from task-service.
      */
-    public static void mockGetTaskStatusSuccess(String taskId, String response) {
-        WireMock.stubFor(WireMock.get(urlEqualTo("/tasks/" + taskId + "/status"))
+    public static void mockUpdateTaskSuccess(String taskId, String response) {
+        WireMock.stubFor(WireMock.put(urlEqualTo("/tasks/" + taskId))
+                .withHeader(HttpHeaders.CONTENT_TYPE, equalTo(MediaType.APPLICATION_JSON_VALUE))
                 .willReturn(WireMock.aResponse()
                         .withStatus(200)
                         .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                         .withBody(response)));
+    }
+
+    /**
+     * Mocks a successful task deletion from task-service.
+     */
+    public static void mockDeleteTaskSuccess(String taskId) {
+        WireMock.stubFor(WireMock.delete(urlEqualTo("/tasks/" + taskId))
+                .willReturn(WireMock.aResponse()
+                        .withStatus(204)));
     }
 }
