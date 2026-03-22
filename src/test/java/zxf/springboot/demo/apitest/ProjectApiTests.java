@@ -7,6 +7,7 @@ import org.skyscreamer.jsonassert.comparator.JSONComparator;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.test.context.jdbc.Sql;
 import org.wiremock.spring.ConfigureWireMock;
 import org.wiremock.spring.EnableWireMock;
 import zxf.springboot.demo.apitest.support.BaseApiTest;
@@ -175,6 +176,21 @@ public class ProjectApiTests extends BaseApiTest {
     }
 
     // ==================== DELETE /api/projects/{id} Tests ====================
+
+    @Test
+    @Sql(scripts = "classpath:sql/cases/project-p-test.sql")
+    void testGetProjectById_WithCaseLevelSql() throws Exception {
+        // Given - 使用 case-level SQL 创建的测试数据
+        String projectId = "p-test";
+        String url = "/api/projects/" + projectId;
+
+        // When
+        ResponseEntity<String> response = httpGetAndAssert(url, commonHeaders(), String.class, HttpStatus.OK, MediaType.APPLICATION_JSON);
+
+        // Then
+        assertThat(response.getBody()).contains("Case Test Project");
+        assertThat(databaseVerifier.getProjectName(projectId)).isEqualTo("Case Test Project");
+    }
 
     @Test
     void testDeleteProject() throws Exception {

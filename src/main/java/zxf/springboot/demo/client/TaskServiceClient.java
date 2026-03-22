@@ -68,30 +68,6 @@ public class TaskServiceClient {
     }
 
     /**
-     * Get task status from downstream task-service.
-     *
-     * @param taskId the task ID
-     * @return ExternalTask with current status, or null if failed
-     */
-    public ExternalTask getTaskStatus(String taskId) {
-        log.info("Calling task-service to get status: id={}", taskId);
-
-        try {
-            ResponseEntity<ExternalTask> response = restTemplate.exchange(
-                taskServiceUrl + "/tasks/{id}/status",
-                HttpMethod.GET,
-                null,
-                EXTERNAL_TASK_TYPE,
-                taskId
-            );
-            return response.getBody();
-        } catch (Exception e) {
-            log.error("Failed to call task-service to get status: {}", e.getMessage());
-            return null;
-        }
-    }
-
-    /**
      * Update task in downstream task-service.
      *
      * @param taskId   the task ID

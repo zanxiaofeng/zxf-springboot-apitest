@@ -15,5 +15,4 @@ import lombok.NoArgsConstructor;
 @Builder
 public class ExternalTask {
     private String taskId;
-    private String status;
 }

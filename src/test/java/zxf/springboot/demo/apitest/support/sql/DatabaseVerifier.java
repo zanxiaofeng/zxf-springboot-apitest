@@ -40,26 +40,11 @@ public class DatabaseVerifier {
                 String.class);
     }
 
-    public boolean taskExists(String id) {
-        Long count = jdbcTemplate.queryForObject(
-                "SELECT COUNT(*) FROM task WHERE id = :id",
-                Map.of("id", id),
-                Long.class);
-        return count != null && count > 0;
-    }
-
     public int countTasks() {
         return jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM task",
                 Map.of(),
                 Integer.class);
-    }
-
-    public String getTaskStatus(String id) {
-        return jdbcTemplate.queryForObject(
-                "SELECT status FROM task WHERE id = :id",
-                Map.of("id", id),
-                String.class);
     }
 
     public String findTaskIdByName(String name) {

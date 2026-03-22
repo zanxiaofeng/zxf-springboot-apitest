@@ -21,15 +21,6 @@ public class TaskServiceMockVerifier {
     }
 
     /**
-     * Verifies that task-service create API was called for a specific task ID.
-     */
-    public static void verifyCreateTaskCalled(int calledCount, String taskId) {
-        WireMock.verify(calledCount, postRequestedFor(urlEqualTo("/tasks"))
-                .withHeader(HttpHeaders.CONTENT_TYPE, equalTo(MediaType.APPLICATION_JSON_VALUE))
-                .withRequestBody(containing("\"id\":\"" + taskId + "\"")));
-    }
-
-    /**
      * Verifies that task-service update API was called expected number of times.
      */
     public static void verifyUpdateTaskCalled(int calledCount, String taskId) {
