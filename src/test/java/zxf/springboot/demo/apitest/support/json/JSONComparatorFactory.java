@@ -41,22 +41,4 @@ public class JSONComparatorFactory {
         return new CustomComparator(JSONCompareMode.LENIENT,
                 timestamp, createdAt, updatedAt, id, downstreamResponse);
     }
-
-    /**
-     * Creates a strict JSON comparator for exact matching.
-     *
-     * @return JSONComparator with strict matching
-     */
-    public static JSONComparator buildStrictComparator() {
-        return new CustomComparator(JSONCompareMode.STRICT);
-    }
-
-    /**
-     * Creates a lenient JSON comparator that ignores extra fields.
-     *
-     * @return JSONComparator with lenient matching
-     */
-    public static JSONComparator buildLenientComparator() {
-        return new CustomComparator(JSONCompareMode.LENIENT);
-    }
 }

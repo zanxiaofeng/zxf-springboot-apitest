@@ -1,6 +1,5 @@
 package zxf.springboot.demo.service;
 
-import lombok.Builder;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
@@ -16,7 +15,6 @@ import java.util.*;
 @Service
 @RequiredArgsConstructor
 public class TaskService {
-
     private final NamedParameterJdbcTemplate jdbcTemplate;
     private final TaskServiceClient taskServiceClient;
 

@@ -18,7 +18,6 @@ import java.util.Map;
 @RequestMapping("/api/tasks")
 @RequiredArgsConstructor
 public class TaskController {
-
     private final TaskService taskService;
 
     /**

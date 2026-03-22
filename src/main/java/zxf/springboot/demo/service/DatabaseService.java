@@ -13,7 +13,6 @@ import java.util.Map;
 @Service
 @RequiredArgsConstructor
 public class DatabaseService {
-
     private final NamedParameterJdbcTemplate jdbcTemplate;
 
     public List<Map<String, Object>> findAllProjects() {

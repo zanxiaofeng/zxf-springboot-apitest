@@ -13,7 +13,6 @@ import java.util.Map;
 @Slf4j
 @Component
 public class TaskServiceClient {
-
     private final RestTemplate restTemplate;
 
     @Value("${task-service.url:http://localhost:8090}")

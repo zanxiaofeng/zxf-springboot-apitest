@@ -41,26 +41,4 @@ public class TaskServiceMockFactory {
                         .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
                         .withBody(response)));
     }
-
-    /**
-     * Mocks a failed response from task-service.
-     *
-     * @param taskName the task name
-     * @param status   the HTTP status code
-     * @param response the mock error response body
-     */
-    public static void mockFailure(String taskName, int status, String response) {
-        WireMock.stubFor(WireMock.get(urlEqualTo("/tasks/status?name=" + taskName))
-                .willReturn(WireMock.aResponse()
-                        .withStatus(status)
-                        .withHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
-                        .withBody(response)));
-    }
-
-    /**
-     * Clears all WireMock stubs.
-     */
-    public static void reset() {
-        WireMock.reset();
-    }
 }

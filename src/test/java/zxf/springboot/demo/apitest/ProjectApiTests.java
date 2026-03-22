@@ -1,6 +1,5 @@
 package zxf.springboot.demo.apitest;
 
-import lombok.extern.slf4j.Slf4j;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -25,23 +24,15 @@ import static org.assertj.core.api.Assertions.assertThat;
  * - Uses TestRestTemplate for HTTP calls
  * - Each test method tests only ONE endpoint
  */
-@Slf4j
 @EnableWireMock({
     @ConfigureWireMock(name = "task-service", port = 8090, filesUnderClasspath = "mock-data")
 })
 public class ProjectApiTests extends BaseApiTest {
-
-    private JSONComparator jsonComparator;
-
-    @BeforeAll
-    static void setupForAll() {
-        log.info("========================= Starting Project API Tests =========================");
-    }
+    private JSONComparator projectApiJsonResponseComparator;
 
     @BeforeEach
     void setupForEach() throws IOException {
-        jsonComparator = JSONComparatorFactory.buildApiResponseComparator();
-        log.info("========================= Setup for each test =========================");
+        projectApiJsonResponseComparator = JSONComparatorFactory.buildApiResponseComparator();
     }
 
     // ==================== POST /api/projects Tests ====================
@@ -67,11 +58,8 @@ public class ProjectApiTests extends BaseApiTest {
         String url = "/api/projects";
         String requestBody = "{\"id\":\"\",\"name\":\"\"}";
 
-        // When
-        ResponseEntity<String> response = httpPost(url, requestBody);
-
-        // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        // When & Then
+        httpPostAndAssert(url, requestBody, HttpStatus.BAD_REQUEST);
     }
 
     @Test
@@ -80,11 +68,8 @@ public class ProjectApiTests extends BaseApiTest {
         String url = "/api/projects";
         String requestBody = "{\"id\":\"proj-001\",\"name\":\"Duplicate Project\"}";
 
-        // When
-        ResponseEntity<String> response = httpPost(url, requestBody);
-
-        // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.CONFLICT);
+        // When & Then
+        httpPostAndAssert(url, requestBody, HttpStatus.CONFLICT);
     }
 
     // ==================== GET /api/projects/{id} Tests ====================
@@ -108,11 +93,8 @@ public class ProjectApiTests extends BaseApiTest {
         // Given
         String url = "/api/projects/non-existent-id";
 
-        // When
-        ResponseEntity<String> response = httpGet(url);
-
-        // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        // When & Then
+        httpGetAndAssert(url, HttpStatus.NOT_FOUND);
     }
 
     // ==================== GET /api/projects Tests ====================
@@ -152,11 +134,8 @@ public class ProjectApiTests extends BaseApiTest {
         String url = "/api/projects/non-existent-id";
         String requestBody = "{\"name\":\"Updated Name\"}";
 
-        // When
-        ResponseEntity<String> response = httpPut(url, requestBody);
-
-        // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        // When & Then
+        httpPutAndAssert(url, requestBody, HttpStatus.NOT_FOUND);
     }
 
     @Test
@@ -165,11 +144,8 @@ public class ProjectApiTests extends BaseApiTest {
         String url = "/api/projects/proj-001";
         String requestBody = "{\"name\":\"\"}";
 
-        // When
-        ResponseEntity<String> response = httpPut(url, requestBody);
-
-        // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        // When & Then
+        httpPutAndAssert(url, requestBody, HttpStatus.BAD_REQUEST);
     }
 
     // ==================== DELETE /api/projects/{id} Tests ====================
@@ -191,10 +167,7 @@ public class ProjectApiTests extends BaseApiTest {
         // Given
         String url = "/api/projects/non-existent-id";
 
-        // When
-        ResponseEntity<String> response = httpDelete(url);
-
-        // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        // When & Then
+        httpDeleteAndAssert(url, HttpStatus.NOT_FOUND);
     }
 }

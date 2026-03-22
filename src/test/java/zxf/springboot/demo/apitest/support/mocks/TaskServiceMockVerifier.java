@@ -16,7 +16,7 @@ public class TaskServiceMockVerifier {
      * Verifies that task-service create API was called expected number of times.
      *
      * @param calledCount expected number of calls
-     * @param taskName     the task name expected
+     * @param taskName    the task name expected
      */
     public static void verifyCreateTaskCalled(int calledCount, String taskName) {
         WireMock.verify(calledCount, postRequestedFor(urlEqualTo("/tasks"))
@@ -32,13 +32,5 @@ public class TaskServiceMockVerifier {
      */
     public static void verifyGetTaskStatusCalled(int calledCount, String taskName) {
         WireMock.verify(calledCount, getRequestedFor(urlEqualTo("/tasks/status?name=" + taskName)));
-    }
-
-    /**
-     * Verifies that task-service was never called.
-     */
-    public static void verifyNeverCalled() {
-        WireMock.verify(0, postRequestedFor(urlEqualTo("/tasks")));
-        WireMock.verify(0, getRequestedFor(urlMatching("/tasks/status.*")));
     }
 }

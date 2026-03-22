@@ -15,7 +15,7 @@ public interface HttpHeadersProvider {
 
     static HttpHeadersProvider commonHeadersAndJson() {
         return () -> {
-            HttpHeaders headers = new HttpHeaders();
+            HttpHeaders headers = commonHeaders().headers();
             headers.setContentType(MediaType.APPLICATION_JSON);
             return headers;
         };

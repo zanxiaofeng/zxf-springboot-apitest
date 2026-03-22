@@ -1,7 +1,5 @@
 package zxf.springboot.demo.apitest;
 
-import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -29,23 +27,16 @@ import static org.assertj.core.api.Assertions.assertThat;
  * - Uses JSONAssert for response validation
  * - Each test method tests only ONE endpoint
  */
-@Slf4j
 @EnableWireMock({
     @ConfigureWireMock(name = "task-service", port = 8090, filesUnderClasspath = "mock-data")
 })
 public class TaskApiTests extends BaseApiTest {
 
-    private JSONComparator jsonComparator;
-
-    @BeforeAll
-    static void setupForAll() {
-        log.info("========================= Starting Task API Tests =========================");
-    }
+    private JSONComparator taskApiJsonResponseComparator;
 
     @BeforeEach
     void setupForEach() throws IOException {
-        jsonComparator = JSONComparatorFactory.buildApiResponseComparator();
-        log.info("========================= Setup for each test =========================");
+        taskApiJsonResponseComparator = JSONComparatorFactory.buildApiResponseComparator();
     }
 
     // ==================== POST /api/tasks Tests ====================
@@ -92,11 +83,8 @@ public class TaskApiTests extends BaseApiTest {
         String url = "/api/tasks";
         String requestBody = "{\"name\":\"\",\"projectId\":null,\"priority\":1}";
 
-        // When
-        ResponseEntity<String> response = httpPost(url, requestBody);
-
-        // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        // When & Then
+        httpPostAndAssert(url, requestBody, HttpStatus.BAD_REQUEST);
     }
 
     // ==================== GET /api/tasks/{id} Tests ====================
@@ -124,11 +112,8 @@ public class TaskApiTests extends BaseApiTest {
         // Given
         String url = "/api/tasks/non-existent-task-id";
 
-        // When
-        ResponseEntity<String> response = httpGet(url);
-
-        // Then
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        // When & Then
+        httpGetAndAssert(url, HttpStatus.NOT_FOUND);
     }
 
     // ==================== GET /api/tasks Tests ====================
