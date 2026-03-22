@@ -4,6 +4,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
@@ -13,6 +14,9 @@ import java.util.Map;
 @Slf4j
 @Component
 public class TaskServiceClient {
+    private static final ParameterizedTypeReference<Map<String, Object>> MAP_TYPE =
+            new ParameterizedTypeReference<>() {};
+
     private final RestTemplate restTemplate;
 
     @Value("${task-service.url:http://localhost:8090}")
@@ -42,7 +46,8 @@ public class TaskServiceClient {
         );
 
         try {
-            ResponseEntity<Map> response = restTemplate.postForEntity(url, request, Map.class);
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
+                url, HttpMethod.POST, request, MAP_TYPE);
             return response.getBody();
         } catch (Exception e) {
             log.error("Failed to call task-service", e);
@@ -57,9 +62,11 @@ public class TaskServiceClient {
         log.info("Calling task-service to get status: {}", taskName);
 
         try {
-            ResponseEntity<Map> response = restTemplate.getForEntity(
+            ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
                 taskServiceUrl + "/tasks/status?name={name}",
-                Map.class,
+                HttpMethod.GET,
+                null,
+                MAP_TYPE,
                 taskName
             );
             return response.getBody();
