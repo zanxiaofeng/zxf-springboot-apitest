@@ -9,6 +9,7 @@ import org.springframework.test.context.jdbc.Sql;
 import java.net.URI;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 /**
  * Base test class for API tests using TestRestTemplate.
@@ -34,10 +35,12 @@ public abstract class BaseApiTest {
      * @param expectedStatus expected HTTP status
      * @return ResponseEntity with String body
      */
-    protected ResponseEntity<String> httpGetAndAssert(String url, HttpStatus expectedStatus) {
-        ResponseEntity<String> response = testRestTemplate.getForEntity(url, String.class);
-        assertThat(response.getStatusCode()).isEqualTo(expectedStatus);
-        return response;
+    protected <T> ResponseEntity<T> httpGetAndAssert(String url, HttpHeaders requestHeaders, Class<T> tClass, HttpStatus expectedStatus, MediaType expectedContentType) {
+        RequestEntity<String> requestEntity = new RequestEntity<>(null, requestHeaders, HttpMethod.GET, URI.create(url));
+        ResponseEntity<T> responseEntity = testRestTemplate.exchange(requestEntity, tClass);
+        assertThat(responseEntity.getStatusCode()).isEqualTo(expectedStatus);
+        assertTrue(expectedContentType.isCompatibleWith(responseEntity.getHeaders().getContentType()));
+        return responseEntity;
     }
 
     // ==================== POST Methods ====================
@@ -46,17 +49,16 @@ public abstract class BaseApiTest {
      * Execute HTTP POST request and assert status code.
      *
      * @param url            the request URL
-     * @param body           the request body as JSON string
+     * @param requestBody    the request body as JSON string
      * @param expectedStatus expected HTTP status
      * @return ResponseEntity with String body
      */
-    protected ResponseEntity<String> httpPostAndAssert(String url, String body, HttpStatus expectedStatus) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        RequestEntity<String> requestEntity = new RequestEntity<>(body, headers, HttpMethod.POST, URI.create(url));
-        ResponseEntity<String> response = testRestTemplate.exchange(requestEntity, String.class);
-        assertThat(response.getStatusCode()).isEqualTo(expectedStatus);
-        return response;
+    protected <T> ResponseEntity<T> httpPostAndAssert(String url, HttpHeaders requestHeaders, String requestBody, Class<T> tClass, HttpStatus expectedStatus, MediaType expectedContentType) {
+        RequestEntity<String> requestEntity = new RequestEntity<>(requestBody, requestHeaders, HttpMethod.POST, URI.create(url));
+        ResponseEntity<T> responseEntity = testRestTemplate.exchange(requestEntity, tClass);
+        assertThat(responseEntity.getStatusCode()).isEqualTo(expectedStatus);
+        assertTrue(expectedContentType.isCompatibleWith(responseEntity.getHeaders().getContentType()));
+        return responseEntity;
     }
 
     // ==================== PUT Methods ====================
@@ -65,17 +67,16 @@ public abstract class BaseApiTest {
      * Execute HTTP PUT request and assert status code.
      *
      * @param url            the request URL
-     * @param body           the request body as JSON string
+     * @param requestBody    the request body as JSON string
      * @param expectedStatus expected HTTP status
      * @return ResponseEntity with String body
      */
-    protected ResponseEntity<String> httpPutAndAssert(String url, String body, HttpStatus expectedStatus) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        RequestEntity<String> requestEntity = new RequestEntity<>(body, headers, HttpMethod.PUT, URI.create(url));
-        ResponseEntity<String> response = testRestTemplate.exchange(requestEntity, String.class);
-        assertThat(response.getStatusCode()).isEqualTo(expectedStatus);
-        return response;
+    protected <T> ResponseEntity<T> httpPutAndAssert(String url, HttpHeaders requestHeaders, String requestBody, Class<T> tClass, HttpStatus expectedStatus, MediaType expectedContentType) {
+        RequestEntity<String> requestEntity = new RequestEntity<>(requestBody, requestHeaders, HttpMethod.PUT, URI.create(url));
+        ResponseEntity<T> responseEntity = testRestTemplate.exchange(requestEntity, tClass);
+        assertThat(responseEntity.getStatusCode()).isEqualTo(expectedStatus);
+        assertTrue(expectedContentType.isCompatibleWith(responseEntity.getHeaders().getContentType()));
+        return responseEntity;
     }
 
     // ==================== DELETE Methods ====================
@@ -87,15 +88,22 @@ public abstract class BaseApiTest {
      * @param expectedStatus expected HTTP status
      * @return ResponseEntity with String body
      */
-    protected ResponseEntity<String> httpDeleteAndAssert(String url, HttpStatus expectedStatus) {
-        ResponseEntity<String> response;
-        try {
-            testRestTemplate.delete(url);
-            response = new ResponseEntity<>(HttpStatus.NO_CONTENT);
-        } catch (Exception e) {
-            response = new ResponseEntity<>(HttpStatus.NOT_FOUND);
-        }
-        assertThat(response.getStatusCode()).isEqualTo(expectedStatus);
-        return response;
+    protected <T> ResponseEntity<T> httpDeleteAndAssert(String url, HttpHeaders requestHeaders, Class<T> tClass, HttpStatus expectedStatus, MediaType expectedContentType) {
+        RequestEntity<String> requestEntity = new RequestEntity<>(null, requestHeaders, HttpMethod.DELETE, URI.create(url));
+        ResponseEntity<T> responseEntity = testRestTemplate.exchange(requestEntity, tClass);
+        assertThat(responseEntity.getStatusCode()).isEqualTo(expectedStatus);
+        assertTrue(expectedContentType.isCompatibleWith(responseEntity.getHeaders().getContentType()));
+        return responseEntity;
+    }
+
+    protected HttpHeaders commonHeaders() {
+        HttpHeaders headers = new HttpHeaders();
+        return headers;
+    }
+
+    protected HttpHeaders commonHeadersAndJson() {
+        HttpHeaders headers = commonHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        return headers;
     }
 }

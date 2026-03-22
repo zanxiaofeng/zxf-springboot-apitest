@@ -46,7 +46,7 @@ public class ProjectApiTests extends BaseApiTest {
         String requestBody = "{\"id\":\"proj-new\",\"name\":\"New Project\"}";
 
         // When
-        ResponseEntity<String> response = httpPostAndAssert(url, requestBody, HttpStatus.CREATED);
+        ResponseEntity<String> response = httpPostJsonAndAssert(url, requestBody, HttpStatus.CREATED);
 
         // Then
         assertThat(response.getHeaders().getFirst("Content-Type")).isEqualTo("application/json");
@@ -61,7 +61,7 @@ public class ProjectApiTests extends BaseApiTest {
         String requestBody = "{\"id\":\"\",\"name\":\"\"}";
 
         // When
-        ResponseEntity<String> response = httpPostAndAssert(url, requestBody, HttpStatus.BAD_REQUEST);
+        ResponseEntity<String> response = httpPostJsonAndAssert(url, requestBody, HttpStatus.BAD_REQUEST);
 
         // Then
         String expectedJson = JsonLoader.load("project/post-project-validation-error.json");
@@ -75,7 +75,7 @@ public class ProjectApiTests extends BaseApiTest {
         String requestBody = "{\"id\":\"proj-001\",\"name\":\"Duplicate Project\"}";
 
         // When
-        ResponseEntity<String> response = httpPostAndAssert(url, requestBody, HttpStatus.CONFLICT);
+        ResponseEntity<String> response = httpPostJsonAndAssert(url, requestBody, HttpStatus.CONFLICT);
 
         // Then
         String expectedJson = JsonLoader.load("project/post-project-conflict.json");

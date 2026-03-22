@@ -54,7 +54,7 @@ public class TaskApiTests extends BaseApiTest {
                 "{\"taskId\":\"ext-123\",\"status\":\"CREATED\"}");
 
         // When
-        ResponseEntity<String> response = httpPostAndAssert(url, requestBody, HttpStatus.CREATED);
+        ResponseEntity<String> response = httpPostJsonAndAssert(url, requestBody, HttpStatus.CREATED);
 
         // Then
         assertThat(response.getHeaders().getFirst("Content-Type")).isEqualTo("application/json");
@@ -72,7 +72,7 @@ public class TaskApiTests extends BaseApiTest {
                 "{\"taskId\":\"ext-456\",\"status\":\"CREATED\"}");
 
         // When
-        ResponseEntity<String> response = httpPostAndAssert(url, requestBody, HttpStatus.CREATED);
+        ResponseEntity<String> response = httpPostJsonAndAssert(url, requestBody, HttpStatus.CREATED);
 
         // Then
         String expectedJson = JsonLoader.load("task/post-task-created.json");
@@ -86,7 +86,7 @@ public class TaskApiTests extends BaseApiTest {
         String requestBody = "{\"name\":\"\",\"projectId\":null,\"priority\":1}";
 
         // When
-        ResponseEntity<String> response = httpPostAndAssert(url, requestBody, HttpStatus.BAD_REQUEST);
+        ResponseEntity<String> response = httpPostJsonAndAssert(url, requestBody, HttpStatus.BAD_REQUEST);
 
         // Then
         String expectedJson = JsonLoader.load("task/post-task-validation-error.json");
