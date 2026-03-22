@@ -16,6 +16,8 @@ import zxf.springboot.demo.apitest.support.json.JsonLoader;
 import java.io.IOException;
 import java.util.Map;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * Project API Tests.
  *
@@ -42,9 +44,11 @@ public class ProjectApiTests extends BaseApiTest {
     @Test
     void testCreateProject() throws Exception {
         // Given
+        String projectId = "proj-new";
         String url = "/api/projects";
         String requestBody = JsonLoader.load("project/post/request.json",
-                Map.of("id", "proj-new", "name", "New Project"));
+                Map.of("id", projectId, "name", "New Project"));
+        int initialCount = databaseVerifier.countProjects();
 
         // When
         ResponseEntity<String> response = httpPostAndAssert(url, commonHeadersAndJson(), requestBody, String.class, HttpStatus.CREATED, MediaType.APPLICATION_JSON);
@@ -52,6 +56,11 @@ public class ProjectApiTests extends BaseApiTest {
         // Then
         String expectedJson = JsonLoader.load("project/post/created.json");
         JSONAssert.assertEquals(expectedJson, response.getBody(), projectApiJsonResponseComparator);
+
+        // And - verify database state
+        assertThat(databaseVerifier.countProjects()).isEqualTo(initialCount + 1);
+        assertThat(databaseVerifier.projectExists(projectId)).isTrue();
+        assertThat(databaseVerifier.getProjectName(projectId)).isEqualTo("New Project");
     }
 
     @Test
@@ -75,6 +84,7 @@ public class ProjectApiTests extends BaseApiTest {
         String url = "/api/projects";
         String requestBody = JsonLoader.load("project/post/request.json",
                 Map.of("id", "proj-001", "name", "Duplicate Project"));
+        int initialCount = databaseVerifier.countProjects();
 
         // When
         ResponseEntity<String> response = httpPostAndAssert(url, commonHeadersAndJson(), requestBody, String.class, HttpStatus.CONFLICT, MediaType.APPLICATION_JSON);
@@ -82,6 +92,9 @@ public class ProjectApiTests extends BaseApiTest {
         // Then
         String expectedJson = JsonLoader.load("project/post/conflict.json");
         JSONAssert.assertEquals(expectedJson, response.getBody(), projectApiJsonResponseComparator);
+
+        // And - verify database state unchanged
+        assertThat(databaseVerifier.countProjects()).isEqualTo(initialCount);
     }
 
     // ==================== GET /api/projects/{id} Tests ====================
@@ -132,9 +145,11 @@ public class ProjectApiTests extends BaseApiTest {
     @Test
     void testUpdateProject() throws Exception {
         // Given - 使用预置数据 proj-001
-        String url = "/api/projects/proj-001";
+        String projectId = "proj-001";
+        String url = "/api/projects/" + projectId;
+        String newName = "Updated Project Name";
         String requestBody = JsonLoader.load("project/put/request.json",
-                Map.of("name", "Updated Project Name"));
+                Map.of("name", newName));
 
         // When
         ResponseEntity<String> response = httpPutAndAssert(url, commonHeadersAndJson(), requestBody, String.class, HttpStatus.OK, MediaType.APPLICATION_JSON);
@@ -142,6 +157,9 @@ public class ProjectApiTests extends BaseApiTest {
         // Then
         String expectedJson = JsonLoader.load("project/put/ok.json");
         JSONAssert.assertEquals(expectedJson, response.getBody(), projectApiJsonResponseComparator);
+
+        // And - verify database state
+        assertThat(databaseVerifier.getProjectName(projectId)).isEqualTo(newName);
     }
 
     @Test
@@ -179,10 +197,17 @@ public class ProjectApiTests extends BaseApiTest {
     @Test
     void testDeleteProject() throws Exception {
         // Given - 使用预置数据 proj-delete
-        String url = "/api/projects/proj-delete";
+        String projectId = "proj-delete";
+        String url = "/api/projects/" + projectId;
+        int initialCount = databaseVerifier.countProjects();
+        assertThat(databaseVerifier.projectExists(projectId)).isTrue();
 
         // When & Then
         httpDeleteAndAssert(url, commonHeaders(), String.class, HttpStatus.NO_CONTENT, null);
+
+        // And - verify database state
+        assertThat(databaseVerifier.projectExists(projectId)).isFalse();
+        assertThat(databaseVerifier.countProjects()).isEqualTo(initialCount - 1);
     }
 
     @Test

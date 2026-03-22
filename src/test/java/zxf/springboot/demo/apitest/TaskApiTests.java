@@ -18,6 +18,8 @@ import zxf.springboot.demo.apitest.support.mocks.TaskServiceMockFactory;
 
 import java.util.Map;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 /**
  * Task API Tests.
  *
@@ -53,30 +55,47 @@ public class TaskApiTests extends BaseApiTest {
         TaskServiceMockFactory.mockCreateTaskSuccess(taskName,
                 "{\"taskId\":\"ext-123\",\"status\":\"CREATED\"}");
 
+        int initialCount = databaseVerifier.countTasks();
+
         // When
         ResponseEntity<String> response = httpPostAndAssert(url, commonHeadersAndJson(), requestBody, String.class, HttpStatus.CREATED, MediaType.APPLICATION_JSON);
 
         // Then
         String expectedJson = JsonLoader.load("task/post/created.json", Map.of("name", taskName, "priority", "1"));
         JSONAssert.assertEquals(expectedJson, response.getBody(), taskApiJsonResponseComparator);
+
+        // And - verify database state
+        assertThat(databaseVerifier.countTasks()).isEqualTo(initialCount + 1);
+        String taskId = databaseVerifier.findTaskIdByName(taskName);
+        assertThat(taskId).isNotNull();
+        assertThat(databaseVerifier.getTaskPriority(taskId)).isEqualTo(1);
     }
 
     @Test
     void testCreateTaskWithProject() throws Exception {
         // Given
+        String taskName = "task-with-project";
         String url = "/api/tasks";
         String requestBody = JsonLoader.load("task/post/request.json",
-                Map.of("name", "task-with-project", "projectId", "\"proj-001\"", "priority", "5"));
+                Map.of("name", taskName, "projectId", "\"proj-001\"", "priority", "5"));
 
-        TaskServiceMockFactory.mockCreateTaskSuccess("task-with-project",
+        TaskServiceMockFactory.mockCreateTaskSuccess(taskName,
                 "{\"taskId\":\"ext-456\",\"status\":\"CREATED\"}");
+
+        int initialCount = databaseVerifier.countTasks();
 
         // When
         ResponseEntity<String> response = httpPostAndAssert(url, commonHeadersAndJson(), requestBody, String.class, HttpStatus.CREATED, MediaType.APPLICATION_JSON);
 
         // Then
-        String expectedJson = JsonLoader.load("task/post/created.json", Map.of("name", "task-with-project", "priority", "5"));
+        String expectedJson = JsonLoader.load("task/post/created.json", Map.of("name", taskName, "priority", "5"));
         JSONAssert.assertEquals(expectedJson, response.getBody(), taskApiJsonResponseComparator);
+
+        // And - verify database state
+        assertThat(databaseVerifier.countTasks()).isEqualTo(initialCount + 1);
+        String taskId = databaseVerifier.findTaskIdByName(taskName);
+        assertThat(taskId).isNotNull();
+        assertThat(databaseVerifier.getTaskPriority(taskId)).isEqualTo(5);
     }
 
     @Test
@@ -86,12 +105,17 @@ public class TaskApiTests extends BaseApiTest {
         String requestBody = JsonLoader.load("task/post/request.json",
                 Map.of("name", "", "projectId", "null", "priority", "1"));
 
+        int initialCount = databaseVerifier.countTasks();
+
         // When
         ResponseEntity<String> response = httpPostAndAssert(url, commonHeadersAndJson(), requestBody, String.class, HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
 
         // Then
         String expectedJson = JsonLoader.load("task/post/validation-error.json");
         JSONAssert.assertEquals(expectedJson, response.getBody(), taskApiJsonResponseComparator);
+
+        // And - verify database state unchanged
+        assertThat(databaseVerifier.countTasks()).isEqualTo(initialCount);
     }
 
     // ==================== GET /api/tasks/{id} Tests ====================

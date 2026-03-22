@@ -5,6 +5,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.*;
 import org.springframework.test.context.jdbc.Sql;
+import zxf.springboot.demo.apitest.support.sql.DatabaseVerifier;
 
 import java.net.URI;
 
@@ -25,6 +26,9 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 public abstract class BaseApiTest {
     @Autowired
     protected TestRestTemplate testRestTemplate;
+
+    @Autowired
+    protected DatabaseVerifier databaseVerifier;
 
     // ==================== GET Methods ====================
 

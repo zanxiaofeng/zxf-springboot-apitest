@@ -54,4 +54,18 @@ public class DatabaseVerifier {
                 Map.of("id", id),
                 String.class);
     }
+
+    public String findTaskIdByName(String name) {
+        return jdbcTemplate.queryForObject(
+                "SELECT id FROM task WHERE name = :name",
+                Map.of("name", name),
+                String.class);
+    }
+
+    public Integer getTaskPriority(String id) {
+        return jdbcTemplate.queryForObject(
+                "SELECT priority FROM task WHERE id = :id",
+                Map.of("id", id),
+                Integer.class);
+    }
 }
