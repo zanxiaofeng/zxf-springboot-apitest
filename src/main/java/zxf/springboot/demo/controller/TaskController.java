@@ -48,13 +48,12 @@ public class TaskController {
     public ResponseEntity<?> getTaskStatus(@PathVariable String id) {
         log.info("::getTaskStatus - id: {}", id);
 
-        try {
-            Task task = taskService.getTaskStatus(id);
-            return ResponseEntity.ok(task);
-        } catch (Exception e) {
+        Task task = taskService.getTaskStatus(id);
+        if (task == null) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("error", "Task not found", "id", id));
         }
+        return ResponseEntity.ok(task);
     }
 
     /**

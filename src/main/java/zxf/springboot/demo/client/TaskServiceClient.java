@@ -56,10 +56,12 @@ public class TaskServiceClient {
     public Map<String, Object> getTaskStatus(String taskName) {
         log.info("Calling task-service to get status: {}", taskName);
 
-        String url = taskServiceUrl + "/tasks/status?name=" + taskName;
-
         try {
-            ResponseEntity<Map> response = restTemplate.getForEntity(url, Map.class);
+            ResponseEntity<Map> response = restTemplate.getForEntity(
+                taskServiceUrl + "/tasks/status?name={name}",
+                Map.class,
+                taskName
+            );
             return response.getBody();
         } catch (Exception e) {
             log.error("Failed to call task-service", e);

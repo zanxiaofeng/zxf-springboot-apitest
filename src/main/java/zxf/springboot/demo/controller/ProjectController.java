@@ -10,6 +10,7 @@ import zxf.springboot.demo.service.DatabaseService;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 @RestController
@@ -28,12 +29,12 @@ public class ProjectController {
     @GetMapping("/{id}")
     public ResponseEntity<?> getProjectById(@PathVariable String id) {
         log.info("::getProjectById - id: {}", id);
-        Map<String, Object> project = databaseService.queryProjectById(id);
-        if (project == null) {
+        Optional<Map<String, Object>> project = databaseService.queryProjectById(id);
+        if (project.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("error", "Project not found", "id", id));
         }
-        return ResponseEntity.ok(project);
+        return ResponseEntity.ok(project.get());
     }
 
     @PostMapping
@@ -47,14 +48,14 @@ public class ProjectController {
                     .body(Map.of("error", "id and name are required"));
         }
 
-        if (databaseService.queryProjectById(id) != null) {
+        if (databaseService.queryProjectById(id).isPresent()) {
             return ResponseEntity.status(HttpStatus.CONFLICT)
                     .body(Map.of("error", "Project already exists", "id", id));
         }
 
         databaseService.insertProject(id, name);
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(databaseService.queryProjectById(id));
+                .body(databaseService.queryProjectById(id).orElse(null));
     }
 
     @PutMapping("/{id}")
@@ -74,15 +75,15 @@ public class ProjectController {
                     .body(Map.of("error", "Project not found", "id", id));
         }
 
-        return ResponseEntity.ok(databaseService.queryProjectById(id));
+        return ResponseEntity.ok(databaseService.queryProjectById(id).orElse(null));
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<?> deleteProject(@PathVariable String id) {
         log.info("::deleteProject - id: {}", id);
 
-        Map<String, Object> project = databaseService.queryProjectById(id);
-        if (project == null) {
+        Optional<Map<String, Object>> project = databaseService.queryProjectById(id);
+        if (project.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(Map.of("error", "Project not found", "id", id));
         }

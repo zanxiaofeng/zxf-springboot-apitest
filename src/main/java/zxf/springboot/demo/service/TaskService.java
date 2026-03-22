@@ -4,6 +4,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 import zxf.springboot.demo.client.TaskServiceClient;
@@ -58,24 +59,29 @@ public class TaskService {
     public Task getTaskStatus(String id) {
         log.info("Querying task status: id={}", id);
 
-        Map<String, Object> row = jdbcTemplate.queryForMap(
-            "SELECT id, name, status, project_id, priority FROM task WHERE id = :id",
-            Map.of("id", id)
-        );
+        try {
+            Map<String, Object> row = jdbcTemplate.queryForMap(
+                "SELECT id, name, status, project_id, priority FROM task WHERE id = :id",
+                Map.of("id", id)
+            );
 
-        String taskName = (String) row.get("name");
+            String taskName = (String) row.get("name");
 
-        // Call downstream task-service to get status
-        Map<String, Object> downstreamResponse = taskServiceClient.getTaskStatus(taskName);
+            // Call downstream task-service to get status
+            Map<String, Object> downstreamResponse = taskServiceClient.getTaskStatus(taskName);
 
-        return Task.builder()
-                .id((String) row.get("id"))
-                .name((String) row.get("name"))
-                .status((String) row.get("status"))
-                .projectId((String) row.get("project_id"))
-                .priority((Integer) row.get("priority"))
-                .downstreamResponse(downstreamResponse)
-                .build();
+            return Task.builder()
+                    .id((String) row.get("id"))
+                    .name((String) row.get("name"))
+                    .status((String) row.get("status"))
+                    .projectId((String) row.get("project_id"))
+                    .priority((Integer) row.get("priority"))
+                    .downstreamResponse(downstreamResponse)
+                    .build();
+        } catch (EmptyResultDataAccessException e) {
+            log.warn("Task not found: {}", id);
+            return null;
+        }
     }
 
     /**
