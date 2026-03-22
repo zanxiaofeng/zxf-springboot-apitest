@@ -93,3 +93,18 @@ TaskServiceMockFactory.mockCreateTaskSuccess(taskName, responseBody);
 - Sensitive data masking (headers: Token, Authorization; JSON fields: email, password, token)
 
 Configured via `zxf.trace.inbound.*` and `zxf.trace.outbound.*` properties.
+
+## Spring Framework Patterns
+
+### 优先使用框架内置能力
+
+当遇到"需要处理编码/转义/格式化"时，先问：**框架是否已内置这个能力？**
+
+| 场景 | 不要手动 | 使用框架 |
+|------|----------|----------|
+| URL 参数编码 | `URLEncoder.encode()` | `RestTemplate.getForEntity(url + "?name={name}", ..., taskName)` |
+| JSON 序列化 | 手动拼接字符串 | `ObjectMapper` / `@RequestBody` |
+| SQL 参数 | 字符串连接 | `JdbcTemplate` 参数占位符 `?` |
+| HTML 转义 | 手动替换 | `HtmlUtils.htmlEscape()` 或模板引擎自动转义 |
+
+**思维模式:** 遇到编码/转义问题时，先查框架 API，再考虑手动处理。
