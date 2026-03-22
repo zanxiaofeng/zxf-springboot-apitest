@@ -1,4 +1,3 @@
 {
-  "id": "proj-new",
-  "name": "New Project"
+  "name": "${name}"
 }

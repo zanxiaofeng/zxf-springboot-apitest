@@ -33,6 +33,13 @@ public class DatabaseVerifier {
                 Integer.class);
     }
 
+    public String findProjectIdByName(String name) {
+        return jdbcTemplate.queryForObject(
+                "SELECT id FROM project WHERE name = :name",
+                Map.of("name", name),
+                String.class);
+    }
+
     public boolean taskExists(String id) {
         Long count = jdbcTemplate.queryForObject(
                 "SELECT COUNT(*) FROM task WHERE id = :id",
