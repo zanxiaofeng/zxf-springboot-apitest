@@ -15,6 +15,7 @@ import zxf.springboot.demo.apitest.support.BaseApiTest;
 import zxf.springboot.demo.apitest.support.json.JSONComparatorFactory;
 import zxf.springboot.demo.apitest.support.json.JsonLoader;
 import zxf.springboot.demo.apitest.support.mocks.TaskServiceMockFactory;
+import zxf.springboot.demo.apitest.support.mocks.TaskServiceMockVerifier;
 
 import java.util.Map;
 
@@ -69,6 +70,9 @@ public class TaskApiTests extends BaseApiTest {
         String taskId = databaseVerifier.findTaskIdByName(taskName);
         assertThat(taskId).isNotNull();
         assertThat(databaseVerifier.getTaskPriority(taskId)).isEqualTo(1);
+
+        // And - verify downstream service was called
+        TaskServiceMockVerifier.verifyCreateTaskCalled(1, taskName);
     }
 
     @Test
@@ -96,6 +100,9 @@ public class TaskApiTests extends BaseApiTest {
         String taskId = databaseVerifier.findTaskIdByName(taskName);
         assertThat(taskId).isNotNull();
         assertThat(databaseVerifier.getTaskPriority(taskId)).isEqualTo(5);
+
+        // And - verify downstream service was called
+        TaskServiceMockVerifier.verifyCreateTaskCalled(1, taskName);
     }
 
     @Test
@@ -116,18 +123,18 @@ public class TaskApiTests extends BaseApiTest {
 
         // And - verify database state unchanged
         assertThat(databaseVerifier.countTasks()).isEqualTo(initialCount);
+
+        // And - verify downstream service was NOT called
+        TaskServiceMockVerifier.verifyCreateTaskCalled(0, "");
     }
 
     // ==================== GET /api/tasks/{id} Tests ====================
 
     @Test
     void testGetTaskById() throws Exception {
-        // Given - 使用预置数据 task-001
+        // Given - 使用预置数据 task-001，静态 mock 由 WireMock 从 mock-data/ 加载
         String taskId = "task-001";
         String url = "/api/tasks/" + taskId;
-
-        TaskServiceMockFactory.mockGetTaskStatusSuccess("Test Task One",
-                "{\"taskId\":\"ext-789\",\"status\":\"COMPLETED\"}");
 
         // When
         ResponseEntity<String> response = httpGetAndAssert(url, commonHeaders(), String.class, HttpStatus.OK, MediaType.APPLICATION_JSON);
@@ -135,6 +142,9 @@ public class TaskApiTests extends BaseApiTest {
         // Then
         String expectedJson = JsonLoader.load("task/get-by-id/ok.json");
         JSONAssert.assertEquals(expectedJson, response.getBody(), taskApiJsonResponseComparator);
+
+        // And - verify downstream service was called
+        TaskServiceMockVerifier.verifyGetTaskStatusCalled(1, "Test Task One");
     }
 
     @Test
@@ -148,6 +158,9 @@ public class TaskApiTests extends BaseApiTest {
         // Then
         String expectedJson = JsonLoader.load("task/get-by-id/not-found.json");
         JSONAssert.assertEquals(expectedJson, response.getBody(), taskApiJsonResponseComparator);
+
+        // And - verify downstream service was NOT called (task not found in DB)
+        TaskServiceMockVerifier.verifyGetTaskStatusCalled(0, "");
     }
 
     // ==================== GET /api/tasks Tests ====================

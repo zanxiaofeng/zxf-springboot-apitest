@@ -1,19 +1,16 @@
 {
   "request": {
-    "urlPath": "/external/api",
     "method": "GET",
+    "urlPath": "/tasks/status",
     "queryParameters": {
-      "task": {
-        "equalTo": "task-200"
+      "name": {
+        "equalTo": "Test Task One"
       }
     }
   },
   "response": {
     "status": 200,
-    "jsonBody": {
-      "task": "EXT.task-200",
-      "value": "1234567890"
-    },
+    "bodyFileName": "get-task-status-response.json",
     "headers": {
       "Content-Type": "application/json"
     }

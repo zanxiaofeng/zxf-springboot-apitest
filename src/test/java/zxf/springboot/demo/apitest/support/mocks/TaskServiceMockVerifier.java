@@ -4,6 +4,9 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
+
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 
 /**
@@ -28,9 +31,10 @@ public class TaskServiceMockVerifier {
      * Verifies that task-service get status API was called expected number of times.
      *
      * @param calledCount expected number of calls
-     * @param taskName    the task name expected
+     * @param taskName    the task name expected (will be URL-encoded for matching)
      */
     public static void verifyGetTaskStatusCalled(int calledCount, String taskName) {
-        WireMock.verify(calledCount, getRequestedFor(urlEqualTo("/tasks/status?name=" + taskName)));
+        String encodedName = URLEncoder.encode(taskName, StandardCharsets.UTF_8).replace("+", "%20");
+        WireMock.verify(calledCount, getRequestedFor(urlEqualTo("/tasks/status?name=" + encodedName)));
     }
 }
