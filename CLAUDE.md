@@ -94,6 +94,16 @@ TaskServiceMockFactory.mockCreateTaskSuccess(taskName, responseBody);
 
 Configured via `zxf.trace.inbound.*` and `zxf.trace.outbound.*` properties.
 
+## Coding Principles
+
+1. **可读性是第一原则** - Code is read more than written
+2. **能用1行完成的代码绝不用2行** - Concise but not cryptic
+3. **优先使用框架/库能力** - Don't reinvent the wheel:
+   - a) JDK 特性优先 (如 text blocks, records, var)
+   - b) Lombok 简化代码 (@Data, @Builder, @Slf4j)
+   - c) Spring/Spring Boot 提供的类
+   - d) Commons 库 (commons-lang3, commons-io)
+
 ## Spring Framework Patterns
 
 ### 优先使用框架内置能力
