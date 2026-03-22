@@ -1,0 +1,5 @@
+{
+  "name": "${name}",
+  "projectId": ${projectId},
+  "priority": ${priority}
+}

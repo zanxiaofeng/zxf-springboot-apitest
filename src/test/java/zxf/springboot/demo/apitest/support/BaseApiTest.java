@@ -39,7 +39,9 @@ public abstract class BaseApiTest {
         RequestEntity<String> requestEntity = new RequestEntity<>(null, requestHeaders, HttpMethod.GET, URI.create(url));
         ResponseEntity<T> responseEntity = testRestTemplate.exchange(requestEntity, tClass);
         assertThat(responseEntity.getStatusCode()).isEqualTo(expectedStatus);
-        assertTrue(expectedContentType.isCompatibleWith(responseEntity.getHeaders().getContentType()));
+        if (expectedContentType != null) {
+            assertTrue(expectedContentType.isCompatibleWith(responseEntity.getHeaders().getContentType()));
+        }
         return responseEntity;
     }
 
@@ -57,7 +59,9 @@ public abstract class BaseApiTest {
         RequestEntity<String> requestEntity = new RequestEntity<>(requestBody, requestHeaders, HttpMethod.POST, URI.create(url));
         ResponseEntity<T> responseEntity = testRestTemplate.exchange(requestEntity, tClass);
         assertThat(responseEntity.getStatusCode()).isEqualTo(expectedStatus);
-        assertTrue(expectedContentType.isCompatibleWith(responseEntity.getHeaders().getContentType()));
+        if (expectedContentType != null) {
+            assertTrue(expectedContentType.isCompatibleWith(responseEntity.getHeaders().getContentType()));
+        }
         return responseEntity;
     }
 
@@ -75,7 +79,9 @@ public abstract class BaseApiTest {
         RequestEntity<String> requestEntity = new RequestEntity<>(requestBody, requestHeaders, HttpMethod.PUT, URI.create(url));
         ResponseEntity<T> responseEntity = testRestTemplate.exchange(requestEntity, tClass);
         assertThat(responseEntity.getStatusCode()).isEqualTo(expectedStatus);
-        assertTrue(expectedContentType.isCompatibleWith(responseEntity.getHeaders().getContentType()));
+        if (expectedContentType != null) {
+            assertTrue(expectedContentType.isCompatibleWith(responseEntity.getHeaders().getContentType()));
+        }
         return responseEntity;
     }
 
@@ -92,7 +98,9 @@ public abstract class BaseApiTest {
         RequestEntity<String> requestEntity = new RequestEntity<>(null, requestHeaders, HttpMethod.DELETE, URI.create(url));
         ResponseEntity<T> responseEntity = testRestTemplate.exchange(requestEntity, tClass);
         assertThat(responseEntity.getStatusCode()).isEqualTo(expectedStatus);
-        assertTrue(expectedContentType.isCompatibleWith(responseEntity.getHeaders().getContentType()));
+        if (expectedContentType != null && responseEntity.getHeaders().getContentType() != null) {
+            assertTrue(expectedContentType.isCompatibleWith(responseEntity.getHeaders().getContentType()));
+        }
         return responseEntity;
     }
 

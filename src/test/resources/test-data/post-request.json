@@ -1,5 +1,0 @@
-{
-  "task": "{{task}}",
-  "projectId": {{projectId}},
-  "priority": 1
-}

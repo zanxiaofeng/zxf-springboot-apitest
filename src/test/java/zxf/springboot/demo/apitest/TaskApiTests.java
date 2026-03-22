@@ -7,6 +7,7 @@ import org.junit.jupiter.params.provider.CsvSource;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.skyscreamer.jsonassert.comparator.JSONComparator;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.wiremock.spring.ConfigureWireMock;
 import org.wiremock.spring.EnableWireMock;
@@ -15,9 +16,7 @@ import zxf.springboot.demo.apitest.support.json.JSONComparatorFactory;
 import zxf.springboot.demo.apitest.support.json.JsonLoader;
 import zxf.springboot.demo.apitest.support.mocks.TaskServiceMockFactory;
 
-import java.io.IOException;
-
-import static org.assertj.core.api.Assertions.assertThat;
+import java.util.Map;
 
 /**
  * Task API Tests.
@@ -37,7 +36,7 @@ public class TaskApiTests extends BaseApiTest {
     private JSONComparator taskApiJsonResponseComparator;
 
     @BeforeEach
-    void setupForEach() throws IOException {
+    void setupForEach() {
         taskApiJsonResponseComparator = JSONComparatorFactory.buildApiResponseComparator();
     }
 
@@ -48,17 +47,17 @@ public class TaskApiTests extends BaseApiTest {
     void testCreateTask(String taskName) throws Exception {
         // Given
         String url = "/api/tasks";
-        String requestBody = String.format("{\"name\":\"%s\",\"projectId\":null,\"priority\":1}", taskName);
+        String requestBody = JsonLoader.load("task/post/request.json",
+                Map.of("name", taskName, "projectId", "null", "priority", "1"));
 
         TaskServiceMockFactory.mockCreateTaskSuccess(taskName,
                 "{\"taskId\":\"ext-123\",\"status\":\"CREATED\"}");
 
         // When
-        ResponseEntity<String> response = httpPostJsonAndAssert(url, requestBody, HttpStatus.CREATED);
+        ResponseEntity<String> response = httpPostAndAssert(url, commonHeadersAndJson(), requestBody, String.class, HttpStatus.CREATED, MediaType.APPLICATION_JSON);
 
         // Then
-        assertThat(response.getHeaders().getFirst("Content-Type")).isEqualTo("application/json");
-        String expectedJson = JsonLoader.load("task/post-task-created.json");
+        String expectedJson = JsonLoader.load("task/post/created.json", Map.of("name", taskName, "priority", "1"));
         JSONAssert.assertEquals(expectedJson, response.getBody(), taskApiJsonResponseComparator);
     }
 
@@ -66,16 +65,17 @@ public class TaskApiTests extends BaseApiTest {
     void testCreateTaskWithProject() throws Exception {
         // Given
         String url = "/api/tasks";
-        String requestBody = "{\"name\":\"task-with-project\",\"projectId\":\"proj-001\",\"priority\":5}";
+        String requestBody = JsonLoader.load("task/post/request.json",
+                Map.of("name", "task-with-project", "projectId", "\"proj-001\"", "priority", "5"));
 
         TaskServiceMockFactory.mockCreateTaskSuccess("task-with-project",
                 "{\"taskId\":\"ext-456\",\"status\":\"CREATED\"}");
 
         // When
-        ResponseEntity<String> response = httpPostJsonAndAssert(url, requestBody, HttpStatus.CREATED);
+        ResponseEntity<String> response = httpPostAndAssert(url, commonHeadersAndJson(), requestBody, String.class, HttpStatus.CREATED, MediaType.APPLICATION_JSON);
 
         // Then
-        String expectedJson = JsonLoader.load("task/post-task-created.json");
+        String expectedJson = JsonLoader.load("task/post/created.json", Map.of("name", "task-with-project", "priority", "5"));
         JSONAssert.assertEquals(expectedJson, response.getBody(), taskApiJsonResponseComparator);
     }
 
@@ -83,13 +83,14 @@ public class TaskApiTests extends BaseApiTest {
     void testCreateTaskWithValidationError() throws Exception {
         // Given
         String url = "/api/tasks";
-        String requestBody = "{\"name\":\"\",\"projectId\":null,\"priority\":1}";
+        String requestBody = JsonLoader.load("task/post/request.json",
+                Map.of("name", "", "projectId", "null", "priority", "1"));
 
         // When
-        ResponseEntity<String> response = httpPostJsonAndAssert(url, requestBody, HttpStatus.BAD_REQUEST);
+        ResponseEntity<String> response = httpPostAndAssert(url, commonHeadersAndJson(), requestBody, String.class, HttpStatus.BAD_REQUEST, MediaType.APPLICATION_JSON);
 
         // Then
-        String expectedJson = JsonLoader.load("task/post-task-validation-error.json");
+        String expectedJson = JsonLoader.load("task/post/validation-error.json");
         JSONAssert.assertEquals(expectedJson, response.getBody(), taskApiJsonResponseComparator);
     }
 
@@ -105,11 +106,10 @@ public class TaskApiTests extends BaseApiTest {
                 "{\"taskId\":\"ext-789\",\"status\":\"COMPLETED\"}");
 
         // When
-        ResponseEntity<String> response = httpGetAndAssert(url, HttpStatus.OK);
+        ResponseEntity<String> response = httpGetAndAssert(url, commonHeaders(), String.class, HttpStatus.OK, MediaType.APPLICATION_JSON);
 
         // Then
-        assertThat(response.getHeaders().getFirst("Content-Type")).isEqualTo("application/json");
-        String expectedJson = JsonLoader.load("task/get-task-by-id.json");
+        String expectedJson = JsonLoader.load("task/get-by-id/ok.json");
         JSONAssert.assertEquals(expectedJson, response.getBody(), taskApiJsonResponseComparator);
     }
 
@@ -119,10 +119,10 @@ public class TaskApiTests extends BaseApiTest {
         String url = "/api/tasks/non-existent-task-id";
 
         // When
-        ResponseEntity<String> response = httpGetAndAssert(url, HttpStatus.NOT_FOUND);
+        ResponseEntity<String> response = httpGetAndAssert(url, commonHeaders(), String.class, HttpStatus.NOT_FOUND, MediaType.APPLICATION_JSON);
 
         // Then
-        String expectedJson = JsonLoader.load("task/get-task-not-found.json");
+        String expectedJson = JsonLoader.load("task/get-by-id/not-found.json");
         JSONAssert.assertEquals(expectedJson, response.getBody(), taskApiJsonResponseComparator);
     }
 
@@ -134,10 +134,10 @@ public class TaskApiTests extends BaseApiTest {
         String url = "/api/tasks";
 
         // When
-        ResponseEntity<String> response = httpGetAndAssert(url, HttpStatus.OK);
+        ResponseEntity<String> response = httpGetAndAssert(url, commonHeaders(), String.class, HttpStatus.OK, MediaType.APPLICATION_JSON);
 
         // Then
-        String expectedJson = JsonLoader.load("task/get-all-tasks.json");
+        String expectedJson = JsonLoader.load("task/get-all/ok.json");
         JSONAssert.assertEquals(expectedJson, response.getBody(), taskApiJsonResponseComparator);
     }
 }
