@@ -53,7 +53,7 @@ public class TaskApiTests extends BaseApiTest {
         String requestBody = JsonLoader.load("task/post/request.json",
                 Map.of("name", taskName, "projectId", "null", "priority", "1"));
 
-        TaskServiceMockFactory.mockCreateTaskSuccess(taskName,
+        TaskServiceMockFactory.mockCreateTaskSuccess(
                 "{\"taskId\":\"ext-123\",\"status\":\"CREATED\"}");
 
         int initialCount = databaseVerifier.countTasks();
@@ -72,7 +72,7 @@ public class TaskApiTests extends BaseApiTest {
         assertThat(databaseVerifier.getTaskPriority(taskId)).isEqualTo(1);
 
         // And - verify downstream service was called
-        TaskServiceMockVerifier.verifyCreateTaskCalled(1, taskName);
+        TaskServiceMockVerifier.verifyCreateTaskCalled(1);
     }
 
     @Test
@@ -83,7 +83,7 @@ public class TaskApiTests extends BaseApiTest {
         String requestBody = JsonLoader.load("task/post/request.json",
                 Map.of("name", taskName, "projectId", "\"proj-001\"", "priority", "5"));
 
-        TaskServiceMockFactory.mockCreateTaskSuccess(taskName,
+        TaskServiceMockFactory.mockCreateTaskSuccess(
                 "{\"taskId\":\"ext-456\",\"status\":\"CREATED\"}");
 
         int initialCount = databaseVerifier.countTasks();
@@ -102,7 +102,7 @@ public class TaskApiTests extends BaseApiTest {
         assertThat(databaseVerifier.getTaskPriority(taskId)).isEqualTo(5);
 
         // And - verify downstream service was called
-        TaskServiceMockVerifier.verifyCreateTaskCalled(1, taskName);
+        TaskServiceMockVerifier.verifyCreateTaskCalled(1);
     }
 
     @Test
@@ -125,7 +125,7 @@ public class TaskApiTests extends BaseApiTest {
         assertThat(databaseVerifier.countTasks()).isEqualTo(initialCount);
 
         // And - verify downstream service was NOT called
-        TaskServiceMockVerifier.verifyCreateTaskCalled(0, "");
+        TaskServiceMockVerifier.verifyCreateTaskCalled(0);
     }
 
     // ==================== GET /api/tasks/{id} Tests ====================
@@ -143,8 +143,8 @@ public class TaskApiTests extends BaseApiTest {
         String expectedJson = JsonLoader.load("task/get-by-id/ok.json");
         JSONAssert.assertEquals(expectedJson, response.getBody(), taskApiJsonResponseComparator);
 
-        // And - verify downstream service was called
-        TaskServiceMockVerifier.verifyGetTaskStatusCalled(1, "Test Task One");
+        // And - verify downstream service was called with task ID
+        TaskServiceMockVerifier.verifyGetTaskStatusCalled(1, taskId);
     }
 
     @Test
@@ -160,7 +160,7 @@ public class TaskApiTests extends BaseApiTest {
         JSONAssert.assertEquals(expectedJson, response.getBody(), taskApiJsonResponseComparator);
 
         // And - verify downstream service was NOT called (task not found in DB)
-        TaskServiceMockVerifier.verifyGetTaskStatusCalled(0, "");
+        TaskServiceMockVerifier.verifyGetTaskStatusCalled(0, "non-existent-task-id");
     }
 
     // ==================== GET /api/tasks Tests ====================

@@ -29,8 +29,8 @@ public class TaskServiceClient {
     /**
      * Create task in downstream task-service
      */
-    public Map<String, Object> createTask(String name, String projectId, Integer priority) {
-        log.info("Calling task-service to create task: {}", name);
+    public Map<String, Object> createTask(String taskId, String name, String projectId, Integer priority) {
+        log.info("Calling task-service to create task: id={}, name={}", taskId, name);
 
         String url = taskServiceUrl + "/tasks";
 
@@ -38,6 +38,7 @@ public class TaskServiceClient {
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(
             Map.of(
+                "id", taskId,
                 "name", name,
                 "projectId", StringUtils.defaultString(projectId),
                 "priority", ObjectUtils.defaultIfNull(priority, 0)
@@ -58,16 +59,16 @@ public class TaskServiceClient {
     /**
      * Get task status from downstream task-service
      */
-    public Map<String, Object> getTaskStatus(String taskName) {
-        log.info("Calling task-service to get status: {}", taskName);
+    public Map<String, Object> getTaskStatus(String taskId) {
+        log.info("Calling task-service to get status: id={}", taskId);
 
         try {
             ResponseEntity<Map<String, Object>> response = restTemplate.exchange(
-                taskServiceUrl + "/tasks/status?name={name}",
+                taskServiceUrl + "/tasks/{id}/status",
                 HttpMethod.GET,
                 null,
                 MAP_TYPE,
-                taskName
+                taskId
             );
             return response.getBody();
         } catch (Exception e) {

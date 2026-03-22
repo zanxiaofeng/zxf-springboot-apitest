@@ -1,12 +1,7 @@
 {
   "request": {
     "method": "GET",
-    "urlPath": "/tasks/status",
-    "queryParameters": {
-      "name": {
-        "equalTo": "Test Task One"
-      }
-    }
+    "urlPath": "/tasks/task-001/status"
   },
   "response": {
     "status": 200,

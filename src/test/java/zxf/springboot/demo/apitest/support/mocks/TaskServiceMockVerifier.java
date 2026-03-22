@@ -4,9 +4,6 @@ import com.github.tomakehurst.wiremock.client.WireMock;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
-
 import static com.github.tomakehurst.wiremock.client.WireMock.*;
 
 /**
@@ -17,24 +14,35 @@ public class TaskServiceMockVerifier {
 
     /**
      * Verifies that task-service create API was called expected number of times.
+     * Does not verify specific task ID (for tests where ID is dynamically generated).
      *
      * @param calledCount expected number of calls
-     * @param taskName    the task name expected
      */
-    public static void verifyCreateTaskCalled(int calledCount, String taskName) {
+    public static void verifyCreateTaskCalled(int calledCount) {
         WireMock.verify(calledCount, postRequestedFor(urlEqualTo("/tasks"))
                 .withHeader(HttpHeaders.CONTENT_TYPE, equalTo(MediaType.APPLICATION_JSON_VALUE))
-                .withRequestBody(containing("\"name\":\"" + taskName + "\"")));
+                .withRequestBody(matching(".*\"id\"\\s*:\\s*\"[^\"]+\".*")));
+    }
+
+    /**
+     * Verifies that task-service create API was called expected number of times.
+     *
+     * @param calledCount expected number of calls
+     * @param taskId      the task ID expected
+     */
+    public static void verifyCreateTaskCalled(int calledCount, String taskId) {
+        WireMock.verify(calledCount, postRequestedFor(urlEqualTo("/tasks"))
+                .withHeader(HttpHeaders.CONTENT_TYPE, equalTo(MediaType.APPLICATION_JSON_VALUE))
+                .withRequestBody(containing("\"id\":\"" + taskId + "\"")));
     }
 
     /**
      * Verifies that task-service get status API was called expected number of times.
      *
      * @param calledCount expected number of calls
-     * @param taskName    the task name expected (will be URL-encoded for matching)
+     * @param taskId      the task ID expected
      */
-    public static void verifyGetTaskStatusCalled(int calledCount, String taskName) {
-        String encodedName = URLEncoder.encode(taskName, StandardCharsets.UTF_8).replace("+", "%20");
-        WireMock.verify(calledCount, getRequestedFor(urlEqualTo("/tasks/status?name=" + encodedName)));
+    public static void verifyGetTaskStatusCalled(int calledCount, String taskId) {
+        WireMock.verify(calledCount, getRequestedFor(urlEqualTo("/tasks/" + taskId + "/status")));
     }
 }

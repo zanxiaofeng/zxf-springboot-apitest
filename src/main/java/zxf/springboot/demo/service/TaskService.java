@@ -41,7 +41,7 @@ public class TaskService {
         );
 
         // Call downstream task-service
-        Map<String, Object> downstreamResponse = taskServiceClient.createTask(name, projectId, priority);
+        Map<String, Object> downstreamResponse = taskServiceClient.createTask(id, name, projectId, priority);
 
         return Task.builder()
                 .id(id)
@@ -65,10 +65,8 @@ public class TaskService {
                 Map.of("id", id)
             );
 
-            String taskName = (String) row.get("name");
-
             // Call downstream task-service to get status
-            Map<String, Object> downstreamResponse = taskServiceClient.getTaskStatus(taskName);
+            Map<String, Object> downstreamResponse = taskServiceClient.getTaskStatus(id);
 
             return Task.builder()
                     .id((String) row.get("id"))
