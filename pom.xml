@@ -12,12 +12,9 @@
     </parent>
 
     <groupId>zxf.springboot</groupId>
-    <artifactId>zxf-apitest-demo</artifactId>
+    <artifactId>zxf-springboot-apitest</artifactId>
     <version>1.0.0</version>
     <packaging>jar</packaging>
-
-    <name>API Test Demo</name>
-    <description>Demo project for Spring Boot API testing with WireMock, H2 and Server Mode</description>
 
     <properties>
         <java.version>21</java.version>
