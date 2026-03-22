@@ -1,8 +1,8 @@
 package zxf.springboot.demo.controller;
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.StringUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -28,13 +28,8 @@ public class TaskController {
      * POST /api/tasks - Create a new task
      */
     @PostMapping
-    public ResponseEntity<?> createTask(@RequestBody TaskRequest request) {
+    public ResponseEntity<?> createTask(@Valid @RequestBody TaskRequest request) {
         log.info("::createTask - name: {}, projectId: {}", request.getName(), request.getProjectId());
-
-        if (StringUtils.isBlank(request.getName())) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", "name is required"));
-        }
 
         Task task = taskService.createTask(
             request.getName(),
@@ -74,13 +69,8 @@ public class TaskController {
      * PUT /api/tasks/{id} - Update a task
      */
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateTask(@PathVariable String id, @RequestBody TaskRequest request) {
+    public ResponseEntity<?> updateTask(@PathVariable String id, @Valid @RequestBody TaskRequest request) {
         log.info("::updateTask - id: {}, name: {}", id, request.getName());
-
-        if (StringUtils.isBlank(request.getName())) {
-            return ResponseEntity.badRequest()
-                    .body(Map.of("error", "name is required"));
-        }
 
         Task task = taskService.updateTask(id, request.getName(), request.getPriority());
         if (task == null) {

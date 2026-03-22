@@ -13,6 +13,10 @@ public class RestTemplateConfig {
 
     @Bean
     public RestTemplate restTemplate(RestTemplateBuilder builder, OutboundLoggingInterceptor interceptor) {
-        return builder.additionalInterceptors(interceptor).build();
+        return builder
+                .connectTimeout(Duration.ofSeconds(5))
+                .readTimeout(Duration.ofSeconds(10))
+                .additionalInterceptors(interceptor)
+                .build();
     }
 }

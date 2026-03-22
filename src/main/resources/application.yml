@@ -7,13 +7,13 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/demo_db?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
     driver-class-name: com.mysql.cj.jdbc.Driver
-    username: demo
-    password: demo123
+    username: ${DB_USERNAME:demo}
+    password: ${DB_PASSWORD:}
 
   # JPA/Hibernate
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
     show-sql: true
 
   # SQL Init

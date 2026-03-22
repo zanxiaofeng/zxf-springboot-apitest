@@ -1,5 +1,6 @@
 package zxf.springboot.demo.model;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -11,5 +12,6 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProjectRequest {
+    @NotBlank(message = "name is required")
     private String name;
 }
