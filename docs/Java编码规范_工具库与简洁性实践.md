@@ -16,6 +16,8 @@
 
 > Concise but not cryptic. 利用现代语法和工具库减少样板代码，但确保不牺牲可读性。
 
+**注意**：这里的"简洁"指**代码意图的简洁**，而非字符数。工具方法（如 `StringUtils.defaultString()`）在表达"提供默认值"这一意图时，比三元表达式更清晰，应优先使用。
+
 ### 1.3 优先使用框架/库能力
 
 > Don't reinvent the wheel. 按照以下优先级选择实现方式：
@@ -47,6 +49,8 @@
 | HTTP 调用 | `HttpUtil.get(url)` | `HttpClient.newHttpClient().send(...)` (JDK 11+) |
 | 日期时间 | `DateUtils / Date` | `java.time.*` (JDK 8+) |
 | Base64 编码 | `Base64.encodeBase64String(...)` | `java.util.Base64.getEncoder().encodeToString(...)` (JDK 8+) |
+| 字符串默认值 | `str != null ? str : ""` | `StringUtils.defaultString(str)` | 工具方法意图更清晰 |
+| 对象默认值 | `obj != null ? obj : default` | `ObjectUtils.defaultIfNull(obj, default)` | 工具方法意图更清晰 |
 
 #### 示例
 
