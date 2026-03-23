@@ -7,7 +7,9 @@ import org.apache.commons.lang3.StringUtils;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import zxf.springboot.demo.client.TaskServiceClient;
+import zxf.springboot.demo.exception.BusinessException;
 import zxf.springboot.demo.model.ExternalTask;
 import zxf.springboot.demo.model.Task;
 
@@ -65,6 +67,7 @@ public class TaskService {
     /**
      * Query task by ID.
      * Returns local task data (does not query downstream to keep response fast).
+     * @throws BusinessException if task not found
      */
     public Task getTaskById(String id) {
         log.info("Querying task: id={}", id);
@@ -85,7 +88,7 @@ public class TaskService {
                     .build();
         } catch (EmptyResultDataAccessException e) {
             log.warn("Task not found: {}", id);
-            return null;
+            throw BusinessException.notFound("Task", id);
         }
     }
 
@@ -110,15 +113,14 @@ public class TaskService {
     /**
      * Update a task.
      * Updates both local and downstream.
+     * @throws BusinessException if task not found
      */
+    @Transactional
     public Task updateTask(String id, String name, Integer priority) {
         log.info("Updating task: id={}, name={}", id, name);
 
-        // Check if exists
+        // Check if exists - will throw BusinessException if not found
         Task existing = getTaskById(id);
-        if (existing == null) {
-            return null;
-        }
 
         // Update downstream
         taskServiceClient.updateTask(id, name, priority);
@@ -146,15 +148,14 @@ public class TaskService {
     /**
      * Delete a task.
      * Deletes from both local and downstream.
+     * @throws BusinessException if task not found
      */
+    @Transactional
     public boolean deleteTask(String id) {
         log.info("Deleting task: id={}", id);
 
-        // Check if exists
-        Task existing = getTaskById(id);
-        if (existing == null) {
-            return false;
-        }
+        // Check if exists - will throw BusinessException if not found
+        getTaskById(id);
 
         // Delete from downstream
         taskServiceClient.deleteTask(id);

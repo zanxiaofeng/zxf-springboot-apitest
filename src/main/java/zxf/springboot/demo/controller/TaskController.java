@@ -11,7 +11,6 @@ import zxf.springboot.demo.model.TaskRequest;
 import zxf.springboot.demo.service.TaskService;
 
 import java.util.List;
-import java.util.Map;
 
 /**
  * REST Controller for task management.
@@ -28,7 +27,7 @@ public class TaskController {
      * POST /api/tasks - Create a new task
      */
     @PostMapping
-    public ResponseEntity<?> createTask(@Valid @RequestBody TaskRequest request) {
+    public ResponseEntity<Task> createTask(@Valid @RequestBody TaskRequest request) {
         log.info("::createTask - name: {}, projectId: {}", request.getName(), request.getProjectId());
 
         Task task = taskService.createTask(
@@ -44,14 +43,9 @@ public class TaskController {
      * GET /api/tasks/{id} - Get task by ID
      */
     @GetMapping("/{id}")
-    public ResponseEntity<?> getTaskById(@PathVariable String id) {
+    public ResponseEntity<Task> getTaskById(@PathVariable String id) {
         log.info("::getTaskById - id: {}", id);
-
         Task task = taskService.getTaskById(id);
-        if (task == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("error", "Task not found", "id", id));
-        }
         return ResponseEntity.ok(task);
     }
 
@@ -69,14 +63,9 @@ public class TaskController {
      * PUT /api/tasks/{id} - Update a task
      */
     @PutMapping("/{id}")
-    public ResponseEntity<?> updateTask(@PathVariable String id, @Valid @RequestBody TaskRequest request) {
+    public ResponseEntity<Task> updateTask(@PathVariable String id, @Valid @RequestBody TaskRequest request) {
         log.info("::updateTask - id: {}, name: {}", id, request.getName());
-
         Task task = taskService.updateTask(id, request.getName(), request.getPriority());
-        if (task == null) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("error", "Task not found", "id", id));
-        }
         return ResponseEntity.ok(task);
     }
 
@@ -84,14 +73,9 @@ public class TaskController {
      * DELETE /api/tasks/{id} - Delete a task
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<?> deleteTask(@PathVariable String id) {
+    public ResponseEntity<Void> deleteTask(@PathVariable String id) {
         log.info("::deleteTask - id: {}", id);
-
-        boolean deleted = taskService.deleteTask(id);
-        if (!deleted) {
-            return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                    .body(Map.of("error", "Task not found", "id", id));
-        }
+        taskService.deleteTask(id);
         return ResponseEntity.noContent().build();
     }
 }
