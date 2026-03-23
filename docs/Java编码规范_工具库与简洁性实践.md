@@ -1,0 +1,330 @@
+# Java 编码规范：工具库与简洁性实践
+
+**版本：** 1.0
+**生效日期：** 2026-03-23
+**适用范围：** 所有基于 Java 17+ 的后端项目（含 Spring Boot）
+
+---
+
+## 1. 核心原则
+
+### 1.1 可读性是第一原则
+
+> Code is read more than written. 优先选择意图清晰、易于维护的写法，避免过度抽象或炫技。
+
+### 1.2 能用 1 行完成的代码绝不用 2 行
+
+> Concise but not cryptic. 利用现代语法和工具库减少样板代码，但确保不牺牲可读性。
+
+### 1.3 优先使用框架/库能力
+
+> Don't reinvent the wheel. 按照以下优先级选择实现方式：
+
+| 优先级 | 类型 | 说明 |
+|--------|------|------|
+| 1 | JDK 特性 | 充分利用现代 JDK（17+）的语法和 API |
+| 2 | Lombok | 减少 getter/setter、构造器、日志等样板代码 |
+| 3 | Spring / Spring Boot | 若项目已使用 Spring，优先复用其内置工具类 |
+| 4 | Apache Commons | 经典补充库（commons-lang3、commons-io 等） |
+| 5 | 其他第三方库 | Guava、Hutool 等，仅在以上均无法简洁实现时按需引入 |
+
+---
+
+## 2. 各层次详细规范
+
+### 2.1 JDK 特性优先
+
+**原则：** 凡 JDK 原生 API 可简洁实现的，绝不引入第三方依赖。
+
+#### 常用替代对照表
+
+| 需求 | ❌ 避免 | ✅ 推荐（JDK 原生） |
+|------|--------|---------------------|
+| 字符串判空 | `StringUtils.isEmpty(str)` | `str == null \|\| str.isBlank()` (JDK 11+) |
+| 集合判空 | `CollectionUtils.isEmpty(list)` | `list == null \|\| list.isEmpty()` |
+| 集合创建 | `Lists.newArrayList(...)` | `List.of(...)` (JDK 9+) |
+| 文件读取 | `FileUtils.readFileToString(...)` | `Files.readString(Path.of(...))` (JDK 11+) |
+| HTTP 调用 | `HttpUtil.get(url)` | `HttpClient.newHttpClient().send(...)` (JDK 11+) |
+| 日期时间 | `DateUtils / Date` | `java.time.*` (JDK 8+) |
+| Base64 编码 | `Base64.encodeBase64String(...)` | `java.util.Base64.getEncoder().encodeToString(...)` (JDK 8+) |
+
+#### 示例
+
+```java
+// 读取文件内容
+String content = Files.readString(Path.of("config.json"));
+
+// 创建不可变集合
+List<String> names = List.of("Alice", "Bob");
+
+// HTTP GET 请求
+HttpClient client = HttpClient.newHttpClient();
+HttpRequest request = HttpRequest.newBuilder(URI.create("https://api.example.com")).build();
+HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+```
+
+---
+
+### 2.2 Lombok 简化代码
+
+**原则：** 在允许使用 Lombok 的项目中，使用注解替代手写样板代码。
+
+#### 推荐注解
+
+| 注解 | 用途 | 示例 |
+|------|------|------|
+| `@Data` | 生成 getter/setter、toString、equals、hashCode | `@Data public class User { ... }` |
+| `@Builder` | 生成建造者模式 | `@Builder @Data public class Order { ... }` |
+| `@Slf4j` | 自动创建 log 对象 | `@Slf4j public class Service { ... }` |
+| `@AllArgsConstructor` / `@NoArgsConstructor` | 生成构造器 | - |
+| `@Value` | 创建不可变类 | `@Value public class Config { ... }` |
+
+#### 限制
+
+- 若团队禁用 Lombok，则手动编写等价代码，但必须遵循可读性原则。
+- 避免滥用 `@Data` 在 JPA 实体上，可能导致循环依赖问题。
+
+---
+
+### 2.3 Spring / Spring Boot 内置能力
+
+**原则：** Spring 项目中，优先使用 spring-core、spring-web 等模块提供的工具类。
+
+#### 常用工具类
+
+| 类 | 常用方法 | 说明 |
+|----|----------|------|
+| `org.springframework.util.StringUtils` | `hasText()`, `trimAllWhitespace()`, `commaDelimitedListToSet()` | 字符串工具 |
+| `org.springframework.util.CollectionUtils` | `isEmpty()`, `mergeArrayIntoCollection()` | 集合工具 |
+| `org.springframework.util.Assert` | `notNull()`, `hasLength()`, `state()` | 参数校验 |
+| `org.springframework.util.FileCopyUtils` | `copy()`, `copyToByteArray()` | 文件/流复制 |
+| `org.springframework.web.client.RestClient` | `get()`, `post()` (Spring 6.1+) | HTTP 客户端 |
+| `org.springframework.beans.BeanUtils` | `copyProperties()`, `instantiateClass()` | Bean 操作 |
+
+#### 示例
+
+```java
+// 参数校验
+Assert.notNull(user, "User must not be null");
+
+// 集合判空
+if (CollectionUtils.isEmpty(list)) {
+    return Collections.emptyList();
+}
+
+// Bean 属性复制
+UserDto dto = new UserDto();
+BeanUtils.copyProperties(user, dto);
+```
+
+---
+
+### 2.4 Apache Commons 库
+
+**原则：** 当 JDK 和 Spring 均无法简洁实现时，引入具体的 Commons 模块，并注释说明原因。
+
+#### 常用模块与场景
+
+| 模块 | 常见用途 | 典型场景 |
+|------|----------|----------|
+| commons-lang3 | 字符串增强（StringUtils）、对象工具（ObjectUtils）、枚举（EnumUtils） | 需要 isBlank()（若 JDK<11）、join() 复杂分隔符 |
+| commons-io | 文件/流操作（FileUtils、IOUtils） | 递归删除目录、复制大文件、读取资源流 |
+| commons-collections4 | 高级集合（Bag、BidiMap）、集合工具（CollectionUtils） | 需要集合交集、差集或双向 Map |
+| commons-codec | 编码解码（Base64、Hex、DigestUtils） | 需要 MD5 或 Hex 编码（若 JDK 未覆盖） |
+| commons-pool2 | 对象池 | 连接池、资源池 |
+
+#### 引入规范
+
+- 只引入具体模块，避免 commons 父依赖。
+- 在 pom.xml 或 build.gradle 中添加注释说明引入原因。
+
+#### 示例
+
+```xml
+<!-- 递归删除目录（JDK 需递归实现，使用 commons-io 简化） -->
+<dependency>
+    <groupId>commons-io</groupId>
+    <artifactId>commons-io</artifactId>
+    <version>2.16.1</version>
+</dependency>
+```
+
+```java
+// 递归删除非空目录
+FileUtils.deleteDirectory(new File("/tmp/cache"));
+```
+
+---
+
+### 2.5 其他第三方库（Guava、Hutool 等）
+
+**原则：** 仅在以上所有层次都无法满足时使用，并严格按需引入模块。
+
+#### 使用条件
+
+- 功能是 JDK / Spring / Commons 未提供的（如本地缓存、限流、Excel 导出）。
+- 能显著减少代码量（超过 10 行手工代码）。
+- 项目已引入或团队成员熟悉该库。
+
+#### 典型场景与推荐库
+
+| 场景 | 推荐库 | 原因 |
+|------|--------|------|
+| 本地缓存 | Guava `CacheBuilder` 或 Caffeine | JDK 无原生支持，且实现复杂 |
+| 限流 | Guava `RateLimiter` | 简单可靠的令牌桶实现 |
+| 不可变集合增强 | Guava `ImmutableXXX` | JDK 不可变集合功能有限（如 builder 模式） |
+| 并发工具增强 | Guava `ListenableFuture` | 简化异步回调 |
+| Excel 简单读写 | Hutool `ExcelUtil` | 封装简洁，避免直接操作 POI |
+| 验证码生成 | Hutool `CaptchaUtil` | 开箱即用，无需自己绘图 |
+| HTTP 快速调用 | Hutool `HttpUtil` | 一行代码完成，适合简单场景 |
+
+#### 引入示例
+
+```xml
+<!-- 使用 Guava 缓存（JDK 无原生支持） -->
+<dependency>
+    <groupId>com.google.guava</groupId>
+    <artifactId>guava</artifactId>
+    <version>33.2.0-jre</version>
+</dependency>
+```
+
+```java
+// 使用 Guava 缓存
+LoadingCache<String, User> cache = CacheBuilder.newBuilder()
+    .expireAfterWrite(10, TimeUnit.MINUTES)
+    .build(key -> userService.load(key));
+```
+
+---
+
+## 3. 依赖管理规范
+
+1. **按需引入，避免全量依赖**
+   - 对于 Commons 库，只引入需要的模块（如 commons-io、commons-lang3）。
+   - 对于 Hutool，优先引入模块（如 hutool-http），而非 hutool-all。
+
+2. **版本统一**
+   - Spring Boot 项目：利用 spring-boot-dependencies BOM 管理 Commons 版本，避免手动指定。
+   - 非 Spring 项目：在 `<dependencyManagement>` 中统一管理版本。
+
+3. **显式注释**
+   - 当引入非 JDK/Spring 依赖时，必须在构建文件或代码中添加注释，说明引入原因，便于维护。
+
+4. **冲突检查**
+   - 引入新依赖前，运行 `mvn dependency:tree` 或 `gradle dependencies` 检查是否存在版本冲突或传递依赖重复。
+
+---
+
+## 4. 代码示例对比
+
+### 场景：删除一个非空目录
+
+#### ❌ 不推荐（JDK 原生实现冗长）
+
+```java
+Path dir = Paths.get("/tmp/cache");
+if (Files.exists(dir)) {
+    Files.walk(dir)
+         .sorted(Comparator.reverseOrder())
+         .forEach(path -> {
+             try {
+                 Files.delete(path);
+             } catch (IOException e) {
+                 throw new RuntimeException(e);
+             }
+         });
+}
+```
+
+#### ✅ 推荐（使用 commons-io）
+
+```java
+// 引入 commons-io 简化递归删除
+FileUtils.deleteDirectory(new File("/tmp/cache"));
+```
+
+---
+
+### 场景：发送 HTTP GET 请求
+
+#### ❌ 不推荐（使用过时库或重复造轮子）
+
+```java
+// 使用 HttpURLConnection 或手动管理连接
+```
+
+#### ✅ 推荐（使用 JDK 原生 HttpClient）
+
+```java
+HttpClient client = HttpClient.newHttpClient();
+HttpRequest request = HttpRequest.newBuilder(URI.create("https://api.example.com")).build();
+HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+```
+
+#### ✅ 备选（Spring Boot 项目中使用 RestClient）
+
+```java
+@Autowired
+private RestClient restClient;
+
+String result = restClient.get()
+    .uri("https://api.example.com")
+    .retrieve()
+    .body(String.class);
+```
+
+---
+
+## 5. 冲突与规避
+
+- **Spring Boot 文件上传：** 若使用 MultipartFile，禁止额外引入 commons-fileupload，避免与 Spring 内置 MultipartResolver 冲突。
+- **日志门面：** 若项目使用 SLF4J，避免引入 commons-logging，防止日志输出混乱。
+- **Bean 属性复制：** 优先使用 Spring `BeanUtils.copyProperties()`，避免 Apache Commons BeanUtils（性能差且易出错）。
+- **集合工具：** Spring 项目中，使用 Spring 的 `CollectionUtils`；非 Spring 项目，可使用 JDK 或 Guava，但避免混用多个库的集合工具。
+
+---
+
+## 6. 决策流程
+
+生成代码时，AI 应遵循以下流程决定采用何种实现：
+
+```mermaid
+graph TD
+    A[功能需求] --> B{JDK 原生可简洁实现?}
+    B -- 是 --> C[使用 JDK 原生 API]
+    B -- 否 --> D{项目使用 Spring?}
+    D -- 是 --> E{Spring 内置工具可满足?}
+    E -- 是 --> F[使用 Spring 工具类]
+    E -- 否 --> G{Commons 库可显著简化?}
+    D -- 否 --> G
+    G -- 是 --> H[引入对应 Commons 模块<br>并注释原因]
+    G -- 否 --> I{其他库提供必需功能?}
+    I -- 是 --> J[按需引入 Guava/Hutool 等<br>并注释原因]
+    I -- 否 --> K[手工实现，保持可读性]
+```
+
+---
+
+## 7. 规范执行与审查
+
+- **代码审查：** 审查者应检查是否遵守本规范，特别是是否引入了不必要的第三方依赖。
+- **静态检查：** 可配置 IDE 或 SonarQube 规则，提示未使用的依赖或不推荐的 API 使用。
+- **持续改进：** 随着 JDK 和框架版本升级，定期审视本规范，淘汰已被原生替代的库。
+
+---
+
+## 8. 附录：常用工具库推荐版本
+
+| 库 | 推荐版本 | 说明 |
+|----|----------|------|
+| commons-lang3 | 3.14.0 | 与 Spring Boot 3.x 兼容 |
+| commons-io | 2.16.1 | 稳定版本 |
+| commons-collections4 | 4.4 | 避免使用 commons-collections（旧版） |
+| commons-codec | 1.17.0 | 编码工具 |
+| guava | 33.2.0-jre | 选择 -jre 变体以获得更好的 Java 兼容性 |
+| hutool | 5.8.26 | 按需引入模块 |
+
+---
+
+*规范结束*
