@@ -6,8 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import zxf.springboot.demo.model.Task;
-import zxf.springboot.demo.model.TaskRequest;
+import zxf.springboot.demo.service.model.Task;
+import zxf.springboot.demo.service.model.TaskRequest;
 import zxf.springboot.demo.service.TaskService;
 
 import java.util.List;
@@ -31,9 +31,9 @@ public class TaskController {
         log.info("::createTask - name: {}, projectId: {}", request.getName(), request.getProjectId());
 
         Task task = taskService.createTask(
-            request.getName(),
-            request.getProjectId(),
-            request.getPriority()
+                request.getName(),
+                request.getProjectId(),
+                request.getPriority()
         );
 
         return ResponseEntity.status(HttpStatus.CREATED).body(task);
@@ -60,22 +60,11 @@ public class TaskController {
     }
 
     /**
-     * PUT /api/tasks/{id} - Update a task
-     */
-    @PutMapping("/{id}")
-    public ResponseEntity<Task> updateTask(@PathVariable String id, @Valid @RequestBody TaskRequest request) {
-        log.info("::updateTask - id: {}, name: {}", id, request.getName());
-        Task task = taskService.updateTask(id, request.getName(), request.getPriority());
-        return ResponseEntity.ok(task);
-    }
-
-    /**
      * DELETE /api/tasks/{id} - Delete a task
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteTask(@PathVariable String id) {
+    public void deleteTask(@PathVariable String id) {
         log.info("::deleteTask - id: {}", id);
         taskService.deleteTask(id);
-        return ResponseEntity.noContent().build();
     }
 }

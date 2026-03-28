@@ -6,7 +6,7 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
 import zxf.springboot.demo.exception.BusinessException;
-import zxf.springboot.demo.model.Project;
+import zxf.springboot.demo.service.model.Project;
 
 import java.util.Collections;
 import java.util.List;

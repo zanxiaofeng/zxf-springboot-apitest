@@ -1,4 +1,4 @@
-package zxf.springboot.demo.model;
+package zxf.springboot.demo.exception.model;
 
 import lombok.Builder;
 import lombok.Data;

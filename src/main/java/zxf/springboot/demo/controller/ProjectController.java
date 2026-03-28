@@ -6,8 +6,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import zxf.springboot.demo.model.Project;
-import zxf.springboot.demo.model.ProjectRequest;
+import zxf.springboot.demo.service.model.Project;
+import zxf.springboot.demo.service.model.ProjectRequest;
 import zxf.springboot.demo.service.ProjectService;
 
 import java.util.List;
@@ -69,9 +69,8 @@ public class ProjectController {
      * DELETE /api/projects/{id} - Delete a project
      */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Void> deleteProject(@PathVariable String id) {
+    public void deleteProject(@PathVariable String id) {
         log.info("::deleteProject - id: {}", id);
         projectService.deleteProject(id);
-        return ResponseEntity.noContent().build();
     }
 }

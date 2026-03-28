@@ -1,4 +1,4 @@
-package zxf.springboot.demo.model;
+package zxf.springboot.demo.client.model;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

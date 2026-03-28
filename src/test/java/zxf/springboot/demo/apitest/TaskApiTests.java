@@ -12,7 +12,7 @@ import org.springframework.http.ResponseEntity;
 import org.wiremock.spring.ConfigureWireMock;
 import org.wiremock.spring.EnableWireMock;
 import zxf.springboot.demo.apitest.support.BaseApiTest;
-import zxf.springboot.demo.apitest.support.json.JSONComparatorFactory;
+import zxf.springboot.demo.apitest.support.json.JsonComparatorFactory;
 import zxf.springboot.demo.apitest.support.json.JsonLoader;
 import zxf.springboot.demo.apitest.support.mocks.TaskServiceMockFactory;
 import zxf.springboot.demo.apitest.support.mocks.TaskServiceMockVerifier;
@@ -40,7 +40,7 @@ public class TaskApiTests extends BaseApiTest {
 
     @BeforeEach
     void setupForEach() {
-        taskApiJsonResponseComparator = JSONComparatorFactory.buildApiResponseComparator();
+        taskApiJsonResponseComparator = JsonComparatorFactory.buildApiResponseComparator();
     }
 
     // ==================== POST /api/tasks Tests ====================
@@ -172,50 +172,6 @@ public class TaskApiTests extends BaseApiTest {
         JSONAssert.assertEquals(expectedJson, response.getBody(), taskApiJsonResponseComparator);
     }
 
-    // ==================== PUT /api/tasks/{id} Tests ====================
-
-    @Test
-    void testUpdateTask() throws Exception {
-        // Given - 使用预置数据 task-001
-        String taskId = "task-001";
-        String url = "/api/tasks/" + taskId;
-        String requestBody = JsonLoader.load("task/put/request.json", Map.of());
-
-        TaskServiceMockFactory.mockUpdateTaskSuccess(taskId,
-                "{\"taskId\":\"ext-789\",\"status\":\"UPDATED\"}");
-
-        // When
-        ResponseEntity<String> response = httpPutAndAssert(url, commonHeadersAndJson(), requestBody, String.class, HttpStatus.OK, MediaType.APPLICATION_JSON);
-
-        // Then
-        String expectedJson = JsonLoader.load("task/put/ok.json");
-        JSONAssert.assertEquals(expectedJson, response.getBody(), taskApiJsonResponseComparator);
-
-        // And - verify downstream service was called
-        TaskServiceMockVerifier.verifyUpdateTaskCalled(1, taskId);
-    }
-
-    @Test
-    void testUpdateTaskNotFound() throws Exception {
-        // Given
-        String taskId = "non-existent-task-id";
-        String url = "/api/tasks/" + taskId;
-        String requestBody = JsonLoader.load("task/put/request.json", Map.of());
-
-        TaskServiceMockFactory.mockUpdateTaskSuccess(taskId,
-                "{\"taskId\":\"ext-xxx\",\"status\":\"UPDATED\"}");
-
-        // When
-        ResponseEntity<String> response = httpPutAndAssert(url, commonHeadersAndJson(), requestBody, String.class, HttpStatus.NOT_FOUND, MediaType.APPLICATION_JSON);
-
-        // Then
-        String expectedJson = JsonLoader.load("task/put/not-found.json");
-        JSONAssert.assertEquals(expectedJson, response.getBody(), taskApiJsonResponseComparator);
-
-        // And - verify downstream service was NOT called (task not found in DB)
-        TaskServiceMockVerifier.verifyUpdateTaskCalled(0, taskId);
-    }
-
     // ==================== DELETE /api/tasks/{id} Tests ====================
 
     @Test
@@ -229,7 +185,7 @@ public class TaskApiTests extends BaseApiTest {
         int initialCount = databaseVerifier.countTasks();
 
         // When
-        ResponseEntity<String> response = httpDeleteAndAssert(url, commonHeaders(), String.class, HttpStatus.NO_CONTENT, null);
+        ResponseEntity<String> response = httpDeleteAndAssert(url, commonHeaders(), String.class, HttpStatus.OK, null);
 
         // Then - verify response has no content
         assertThat(response.getBody()).isNull();

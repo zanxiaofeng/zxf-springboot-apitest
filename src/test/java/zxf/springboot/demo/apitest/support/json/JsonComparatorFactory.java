@@ -10,9 +10,9 @@ import org.skyscreamer.jsonassert.comparator.JSONComparator;
  * Factory for creating JSON comparators with custom matching rules.
  * Useful for ignoring dynamic fields during assertion.
  */
-public final class JSONComparatorFactory {
+public final class JsonComparatorFactory {
 
-    private JSONComparatorFactory() {
+    private JsonComparatorFactory() {
     }
 
     /**

@@ -4,12 +4,14 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.*;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
-import zxf.springboot.demo.model.ExternalTask;
+import zxf.springboot.demo.client.model.ExternalTask;
+import zxf.springboot.demo.trace.OutboundLoggingInterceptor;
 
+import java.time.Duration;
 import java.util.Map;
 
 /**
@@ -19,16 +21,12 @@ import java.util.Map;
 @Slf4j
 @Component
 public class TaskServiceClient {
-    private static final ParameterizedTypeReference<ExternalTask> EXTERNAL_TASK_TYPE =
-            new ParameterizedTypeReference<>() {};
-
     private final RestTemplate restTemplate;
-
     @Value("${task-service.url:http://localhost:8090}")
     private String taskServiceUrl;
 
-    public TaskServiceClient(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
+    public TaskServiceClient(RestTemplateBuilder builder, OutboundLoggingInterceptor interceptor) {
+        this.restTemplate = builder.additionalInterceptors(interceptor).build();
     }
 
     /**
@@ -48,18 +46,17 @@ public class TaskServiceClient {
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(
-            Map.of(
-                "id", taskId,
-                "name", name,
-                "projectId", StringUtils.defaultString(projectId),
-                "priority", ObjectUtils.defaultIfNull(priority, 0)
-            ),
-            headers
+                Map.of(
+                        "id", taskId,
+                        "name", name,
+                        "projectId", StringUtils.defaultString(projectId),
+                        "priority", ObjectUtils.defaultIfNull(priority, 0)
+                ),
+                headers
         );
 
         try {
-            ResponseEntity<ExternalTask> response = restTemplate.exchange(
-                url, HttpMethod.POST, request, EXTERNAL_TASK_TYPE);
+            ResponseEntity<ExternalTask> response = restTemplate.exchange(url, HttpMethod.POST, request, ExternalTask.class);
             return response.getBody();
         } catch (Exception e) {
             log.error("Failed to call task-service to create task: {}", e.getMessage());
@@ -78,24 +75,20 @@ public class TaskServiceClient {
     public ExternalTask updateTask(String taskId, String name, Integer priority) {
         log.info("Calling task-service to update task: id={}, name={}", taskId, name);
 
+        String url = taskServiceUrl + "/tasks/{id}";
+
         HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.APPLICATION_JSON);
         HttpEntity<Map<String, Object>> request = new HttpEntity<>(
-            Map.of(
-                "name", StringUtils.defaultString(name),
-                "priority", ObjectUtils.defaultIfNull(priority, 0)
-            ),
-            headers
+                Map.of(
+                        "name", StringUtils.defaultString(name),
+                        "priority", ObjectUtils.defaultIfNull(priority, 0)
+                ),
+                headers
         );
 
         try {
-            ResponseEntity<ExternalTask> response = restTemplate.exchange(
-                taskServiceUrl + "/tasks/{id}",
-                HttpMethod.PUT,
-                request,
-                EXTERNAL_TASK_TYPE,
-                taskId
-            );
+            ResponseEntity<ExternalTask> response = restTemplate.exchange(url, HttpMethod.PUT, request, ExternalTask.class, taskId);
             return response.getBody();
         } catch (Exception e) {
             log.error("Failed to call task-service to update task: {}", e.getMessage());
@@ -112,14 +105,10 @@ public class TaskServiceClient {
     public boolean deleteTask(String taskId) {
         log.info("Calling task-service to delete task: id={}", taskId);
 
+        String url = taskServiceUrl + "/tasks/{id}";
+
         try {
-            restTemplate.exchange(
-                taskServiceUrl + "/tasks/{id}",
-                HttpMethod.DELETE,
-                null,
-                Void.class,
-                taskId
-            );
+            restTemplate.exchange(url, HttpMethod.DELETE, null, Void.class, taskId);
             return true;
         } catch (Exception e) {
             log.error("Failed to call task-service to delete task: {}", e.getMessage());

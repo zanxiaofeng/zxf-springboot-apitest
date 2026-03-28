@@ -1,0 +1,13 @@
+{
+  "request": {
+    "method": "GET",
+    "urlPath": "/api/tasks/task-002"
+  },
+  "response": {
+    "status": 200,
+    "bodyFileName": "task-by-id-002.json",
+    "headers": {
+      "Content-Type": "application/json"
+    }
+  }
+}

@@ -11,7 +11,7 @@ import org.springframework.test.context.jdbc.Sql;
 import org.wiremock.spring.ConfigureWireMock;
 import org.wiremock.spring.EnableWireMock;
 import zxf.springboot.demo.apitest.support.BaseApiTest;
-import zxf.springboot.demo.apitest.support.json.JSONComparatorFactory;
+import zxf.springboot.demo.apitest.support.json.JsonComparatorFactory;
 import zxf.springboot.demo.apitest.support.json.JsonLoader;
 
 import java.util.Map;
@@ -37,7 +37,7 @@ public class ProjectApiTests extends BaseApiTest {
 
     @BeforeEach
     void setupForEach() {
-        projectApiJsonResponseComparator = JSONComparatorFactory.buildApiResponseComparator();
+        projectApiJsonResponseComparator = JsonComparatorFactory.buildApiResponseComparator();
     }
 
     // ==================== POST /api/projects Tests ====================
@@ -201,7 +201,7 @@ public class ProjectApiTests extends BaseApiTest {
         assertThat(databaseVerifier.projectExists(projectId)).isTrue();
 
         // When & Then
-        httpDeleteAndAssert(url, commonHeaders(), String.class, HttpStatus.NO_CONTENT, null);
+        httpDeleteAndAssert(url, commonHeaders(), String.class, HttpStatus.OK, null);
 
         // And - verify database state
         assertThat(databaseVerifier.projectExists(projectId)).isFalse();

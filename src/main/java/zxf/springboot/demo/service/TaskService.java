@@ -10,8 +10,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import zxf.springboot.demo.client.TaskServiceClient;
 import zxf.springboot.demo.exception.BusinessException;
-import zxf.springboot.demo.model.ExternalTask;
-import zxf.springboot.demo.model.Task;
+import zxf.springboot.demo.client.model.ExternalTask;
+import zxf.springboot.demo.service.model.Task;
 
 import java.util.*;
 

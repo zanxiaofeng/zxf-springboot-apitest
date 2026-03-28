@@ -7,7 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
-import zxf.springboot.demo.model.ErrorResponse;
+import zxf.springboot.demo.exception.model.ErrorResponse;
 
 import java.time.Instant;
 
