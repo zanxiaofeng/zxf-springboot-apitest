@@ -2,7 +2,7 @@
 
 **版本：** 1.0
 **生效日期：** 2026-03-23
-**适用范围：** 所有基于 Java 17+ 的后端项目（含 Spring Boot）
+**适用范围：** 所有基于 Java 21+ 的后端项目（含 Spring Boot 3.5+）
 
 ---
 
@@ -24,7 +24,7 @@
 
 | 优先级 | 类型 | 说明 |
 |--------|------|------|
-| 1 | JDK 特性 | 充分利用现代 JDK（17+）的语法和 API |
+| 1 | JDK 特性 | 充分利用现代 JDK（21+）的语法和 API |
 | 2 | Lombok | 减少 getter/setter、构造器、日志等样板代码 |
 | 3 | Spring / Spring Boot | 若项目已使用 Spring，优先复用其内置工具类 |
 | 4 | Apache Commons | 经典补充库（commons-lang3、commons-io 等） |
@@ -49,8 +49,11 @@
 | HTTP 调用 | `HttpUtil.get(url)` | `HttpClient.newHttpClient().send(...)` (JDK 11+) |
 | 日期时间 | `DateUtils / Date` | `java.time.*` (JDK 8+) |
 | Base64 编码 | `Base64.encodeBase64String(...)` | `java.util.Base64.getEncoder().encodeToString(...)` (JDK 8+) |
+| 数值范围限制 | `Math.min(Math.max(val, min), max)` | `Math.clamp(val, min, max)` (JDK 21) |
 | 字符串默认值 | `str != null ? str : ""` | `StringUtils.defaultString(str)` | 工具方法意图更清晰 |
 | 对象默认值 | `obj != null ? obj : default` | `ObjectUtils.defaultIfNull(obj, default)` | 工具方法意图更清晰 |
+| 类型判断分支 | `if (obj instanceof X) { X x = (X) obj; ... }` | `if (obj instanceof X x) { ... }` (JDK 16+ 模式匹配) |
+| 获取集合首/末元素 | 手动 `get(0)` / `get(size()-1)` | `sequencedCollection.getFirst()` / `getLast()` (JDK 21) |
 
 #### 示例
 
@@ -65,6 +68,38 @@ List<String> names = List.of("Alice", "Bob");
 HttpClient client = HttpClient.newHttpClient();
 HttpRequest request = HttpRequest.newBuilder(URI.create("https://api.example.com")).build();
 HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+```
+
+#### JDK 21 新特性示例
+
+```java
+// 模式匹配 switch（JDK 21 正式版）
+String formatted = switch (obj) {
+    case Integer i -> String.format("int %d", i);
+    case Long l    -> String.format("long %d", l);
+    case Double d  -> String.format("double %f", d);
+    case String s  -> String.format("String %s", s);
+    case null      -> "null";
+    default        -> obj.toString();
+};
+
+// Record Pattern（JDK 21 正式版）
+if (obj instanceof Point(int x, int y)) {
+    System.out.println("x=" + x + ", y=" + y);
+}
+
+// SequencedCollection - 获取首末元素（JDK 21）
+SequencedCollection<String> seq = new ArrayList<>(List.of("a", "b", "c"));
+String first = seq.getFirst();   // "a"
+String last  = seq.getLast();    // "c"
+
+// Math.clamp - 数值范围限制（JDK 21）
+int clamped = Math.clamp(value, 0, 100);
+
+// Virtual Threads - 虚拟线程（JDK 21）
+try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+    executor.submit(() -> doSomething());
+}
 ```
 
 ---
@@ -100,16 +135,25 @@ HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.o
 |----|----------|------|
 | `org.springframework.util.StringUtils` | `hasText()`, `trimAllWhitespace()`, `commaDelimitedListToSet()` | 字符串工具 |
 | `org.springframework.util.CollectionUtils` | `isEmpty()`, `mergeArrayIntoCollection()` | 集合工具 |
-| `org.springframework.util.Assert` | `notNull()`, `hasLength()`, `state()` | 参数校验 |
+| `org.springframework.util.Assert` | `notNull()`, `hasLength()`, `state()`, `isTrue()` | 参数校验（Spring Boot 项目首选） |
 | `org.springframework.util.FileCopyUtils` | `copy()`, `copyToByteArray()` | 文件/流复制 |
-| `org.springframework.web.client.RestClient` | `get()`, `post()` (Spring 6.1+) | HTTP 客户端 |
+| `org.springframework.web.client.RestClient` | `get()`, `post()`, `delete()` | HTTP 客户端（Spring 6.1+，推荐替代 RestTemplate） |
 | `org.springframework.beans.BeanUtils` | `copyProperties()`, `instantiateClass()` | Bean 操作 |
+
+#### Spring Boot 3.5 特性
+
+| 特性 | 配置/说明 |
+|------|-----------|
+| Virtual Threads | `spring.threads.virtual.enabled=true` — 一键启用虚拟线程，无需代码改动 |
+| RestClient | 替代 RestTemplate 的现代 HTTP 客户端，Fluent API |
+| CDS 支持 | `spring-boot-maven-plugin` 支持 CDS 加速启动 |
 
 #### 示例
 
 ```java
-// 参数校验
+// 参数校验（Spring Assert）
 Assert.notNull(user, "User must not be null");
+Assert.hasText(name, "name must not be blank");
 
 // 集合判空
 if (CollectionUtils.isEmpty(list)) {
@@ -119,6 +163,27 @@ if (CollectionUtils.isEmpty(list)) {
 // Bean 属性复制
 UserDto dto = new UserDto();
 BeanUtils.copyProperties(user, dto);
+```
+
+#### RestClient 示例（Spring Boot 3.5 推荐的 HTTP 客户端）
+
+```java
+// 注入 RestClient（替代 RestTemplate）
+@Autowired
+private RestClient restClient;
+
+// GET 请求
+String result = restClient.get()
+    .uri("https://api.example.com/users/{id}", userId)
+    .retrieve()
+    .body(String.class);
+
+// POST 请求
+User created = restClient.post()
+    .uri("/users")
+    .body(newUser)
+    .retrieve()
+    .body(User.class);
 ```
 
 ---
@@ -131,7 +196,7 @@ BeanUtils.copyProperties(user, dto);
 
 | 模块 | 常见用途 | 典型场景 |
 |------|----------|----------|
-| commons-lang3 | 字符串增强（StringUtils）、对象工具（ObjectUtils）、枚举（EnumUtils） | 需要 isBlank()（若 JDK<11）、join() 复杂分隔符 |
+| commons-lang3 | 字符串增强（StringUtils）、对象工具（ObjectUtils）、枚举（EnumUtils） | 需要 `join()` 复杂分隔符、`abbreviate()` 等高级操作 |
 | commons-io | 文件/流操作（FileUtils、IOUtils） | 递归删除目录、复制大文件、读取资源流 |
 | commons-collections4 | 高级集合（Bag、BidiMap）、集合工具（CollectionUtils） | 需要集合交集、差集或双向 Map |
 | commons-codec | 编码解码（Base64、Hex、DigestUtils） | 需要 MD5 或 Hex 编码（若 JDK 未覆盖） |
@@ -177,7 +242,7 @@ FileUtils.deleteDirectory(new File("/tmp/cache"));
 | 本地缓存 | Guava `CacheBuilder` 或 Caffeine | JDK 无原生支持，且实现复杂 |
 | 限流 | Guava `RateLimiter` | 简单可靠的令牌桶实现 |
 | 不可变集合增强 | Guava `ImmutableXXX` | JDK 不可变集合功能有限（如 builder 模式） |
-| 并发工具增强 | Guava `ListenableFuture` | 简化异步回调 |
+| 并发工具增强 | Guava `ListenableFuture` | 简化异步回调（优先考虑 JDK `CompletableFuture`） |
 | Excel 简单读写 | Hutool `ExcelUtil` | 封装简洁，避免直接操作 POI |
 | 验证码生成 | Hutool `CaptchaUtil` | 开箱即用，无需自己绘图 |
 | HTTP 快速调用 | Hutool `HttpUtil` | 一行代码完成，适合简单场景 |
@@ -252,21 +317,14 @@ FileUtils.deleteDirectory(new File("/tmp/cache"));
 
 ### 场景：发送 HTTP GET 请求
 
-#### ❌ 不推荐（使用过时库或重复造轮子）
+#### ❌ 不推荐（使用过时库或 RestTemplate）
 
 ```java
-// 使用 HttpURLConnection 或手动管理连接
+// RestTemplate 已进入维护模式，不再推荐用于新代码
+RestTemplate restTemplate = new RestTemplate();
 ```
 
-#### ✅ 推荐（使用 JDK 原生 HttpClient）
-
-```java
-HttpClient client = HttpClient.newHttpClient();
-HttpRequest request = HttpRequest.newBuilder(URI.create("https://api.example.com")).build();
-HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
-```
-
-#### ✅ 备选（Spring Boot 项目中使用 RestClient）
+#### ✅ 推荐（Spring Boot 项目使用 RestClient）
 
 ```java
 @Autowired
@@ -278,14 +336,24 @@ String result = restClient.get()
     .body(String.class);
 ```
 
+#### ✅ 备选（非 Spring 项目使用 JDK 原生 HttpClient）
+
+```java
+HttpClient client = HttpClient.newHttpClient();
+HttpRequest request = HttpRequest.newBuilder(URI.create("https://api.example.com")).build();
+HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+```
+
 ---
 
 ## 5. 冲突与规避
 
+- **HTTP 客户端：** Spring Boot 3.5+ 项目优先使用 `RestClient`，`RestTemplate` 已进入维护模式（Maintenance Mode），仅保留用于存量代码兼容。
 - **Spring Boot 文件上传：** 若使用 MultipartFile，禁止额外引入 commons-fileupload，避免与 Spring 内置 MultipartResolver 冲突。
 - **日志门面：** 若项目使用 SLF4J，避免引入 commons-logging，防止日志输出混乱。
 - **Bean 属性复制：** 优先使用 Spring `BeanUtils.copyProperties()`，避免 Apache Commons BeanUtils（性能差且易出错）。
 - **集合工具：** Spring 项目中，使用 Spring 的 `CollectionUtils`；非 Spring 项目，可使用 JDK 或 Guava，但避免混用多个库的集合工具。
+- **异步编程：** 优先使用 JDK `CompletableFuture`，避免在 Spring Boot 3.5 项目中引入 Guava `ListenableFuture`（已被 JDK 原生方案替代）。
 
 ---
 
@@ -312,7 +380,7 @@ graph TD
 
 ## 7. 规范执行与审查
 
-- **代码审查：** 审查者应检查是否遵守本规范，特别是是否引入了不必要的第三方依赖。
+- **代码审查：** 审查者应检查是否遵守本规范，特别是是否引入了不必要的第三方依赖、是否使用了 `RestTemplate` 而非 `RestClient`、是否误用 `javax.*` 而非 `jakarta.*` 命名空间。
 - **静态检查：** 可配置 IDE 或 SonarQube 规则，提示未使用的依赖或不推荐的 API 使用。
 - **持续改进：** 随着 JDK 和框架版本升级，定期审视本规范，淘汰已被原生替代的库。
 
@@ -322,12 +390,14 @@ graph TD
 
 | 库 | 推荐版本 | 说明 |
 |----|----------|------|
-| commons-lang3 | 3.14.0 | 与 Spring Boot 3.x 兼容 |
-| commons-io | 2.16.1 | 稳定版本 |
+| commons-lang3 | 3.17.0 | 与 Spring Boot 3.5.x 兼容 |
+| commons-io | 2.18.0 | 稳定版本 |
 | commons-collections4 | 4.4 | 避免使用 commons-collections（旧版） |
-| commons-codec | 1.17.0 | 编码工具 |
-| guava | 33.2.0-jre | 选择 -jre 变体以获得更好的 Java 兼容性 |
-| hutool | 5.8.26 | 按需引入模块 |
+| commons-codec | 1.17.1 | 编码工具 |
+| guava | 33.4.0-jre | 选择 -jre 变体以获得更好的 Java 兼容性 |
+| hutool | 5.8.34 | 按需引入模块 |
+
+> **注意：** Spring Boot 3.5.x 通过 BOM 管理了大部分依赖版本。使用 `spring-boot-dependencies` BOM 时，无需手动指定 Commons 库版本。
 
 ---
 

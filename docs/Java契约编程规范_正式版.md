@@ -2,7 +2,7 @@
 
 **版本：** 1.0  
 **生效日期：** 2026-03-23  
-**适用范围：** 所有基于 Java 17+ 的服务端、客户端及基础库代码
+**适用范围：** 所有基于 Java 21+ 的服务端、客户端及基础库代码（含 Spring Boot 3.5+）
 
 ---
 
@@ -58,8 +58,9 @@
 | 优先级 | 工具 | 适用场景 |
 |--------|------|----------|
 | 1 | `Objects.requireNonNull()` | JDK 原生，仅非空校验 |
-| 2 | `Preconditions` (Guava) | 复杂校验场景（范围、条件等） |
-| 3 | 自建工具类 | 项目未引入 Guava 时 |
+| 2 | `org.springframework.util.Assert` | Spring Boot 项目首选，零额外依赖 |
+| 3 | `Preconditions` (Guava) | 非 Spring 项目或复杂校验场景 |
+| 4 | 自建工具类 | 以上均不可用时 |
 
 ### 3.3 基础校验类型
 
@@ -79,19 +80,35 @@ public void updateUser(@Nonnull String userId, int age, List<String> tags) {
     // 非空校验
     Objects.requireNonNull(userId, "userId must not be null");
     Objects.requireNonNull(tags, "tags must not be null");
-    
+
     // 字符串非空校验
-    Preconditions.checkArgument(!userId.trim().isEmpty(), 
+    Preconditions.checkArgument(!userId.isBlank(),
         "userId must not be blank");
-    
-    // 数值范围校验
-    Preconditions.checkArgument(age >= 0 && age <= 150, 
-        "age out of range [0, 150], was: %s", age);
-    
+
+    // 数值范围校验（JDK 21 可使用 Math.clamp 确保值在范围内）
+    Preconditions.checkArgument(age >= 0 && age <= 150,
+        "age must be in range [0, 150], was: %s", age);
+
     // 集合元素校验
-    Preconditions.checkArgument(!tags.isEmpty(), 
+    Preconditions.checkArgument(!tags.isEmpty(),
         "tags must not be empty");
-    
+
+    // 业务逻辑...
+}
+```
+
+#### Spring Boot 项目替代方案（使用 `org.springframework.util.Assert`）
+
+```java
+import org.springframework.util.Assert;
+
+public void updateUser(@NonNull String userId, int age, List<String> tags) {
+    Assert.hasText(userId, "userId must not be blank");
+    Assert.notNull(tags, "tags must not be null");
+    Assert.isTrue(age >= 0 && age <= 150,
+        () -> "age must be in range [0, 150], was: " + age);
+    Assert.isTrue(!tags.isEmpty(), "tags must not be empty");
+
     // 业务逻辑...
 }
 ```
@@ -116,7 +133,7 @@ private void calculateDiscount(BigDecimal amount, int level) {
     Objects.requireNonNull(amount, "amount must not be null");
     Preconditions.checkArgument(amount.compareTo(BigDecimal.ZERO) >= 0,
         "amount must be non-negative, was: %s", amount);
-    
+
     // 计算逻辑...
 }
 ```
@@ -172,15 +189,18 @@ private void deductInventory(int quantity) {
 
 | 注解 | 来源 | 用途 |
 |------|------|------|
-| `@NotNull` / `@Nullable` | `javax.annotation` / `org.jetbrains.annotations` | 声明可空性 |
-| `@Nonnull` / `@CheckForNull` | `javax.annotation` | JSR-305 标准 |
+| `@NonNull` / `@Nullable` | `jakarta.annotation` (Jakarta EE 10) | Spring Boot 3.x 标准注解 |
+| `@Nonnull` / `@CheckForNull` | `jakarta.annotation` | Jakarta 注解，替代旧版 JSR-305 |
+| `@NotNull` / `@Nullable` | `org.jetbrains.annotations` | IntelliJ IDEA 兼容 |
 | `@NonNull` | `lombok` | Lombok 项目使用 |
+
+> **注意：** Spring Boot 3.x 基于 Jakarta EE 10，注解包名从 `javax.annotation` 迁移至 `jakarta.annotation`。新项目应统一使用 `jakarta.annotation`，禁止使用旧版 `javax.annotation`。
 
 ### 5.2 注解使用示例
 
 ```java
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import jakarta.annotation.Nonnull;
+import jakarta.annotation.Nullable;
 
 public class UserService {
     
@@ -191,7 +211,7 @@ public class UserService {
      */
     public @Nullable User getById(@Nonnull String id) {
         Objects.requireNonNull(id, "id must not be null");
-        Preconditions.checkArgument(!id.isEmpty(), 
+        Preconditions.checkArgument(!id.isEmpty(),
             "id must not be empty");
         // ...
     }
@@ -249,7 +269,7 @@ Preconditions.checkArgument(age >= 0 && age <= 150,
     "age must be in range [0, 150], but was: %s", age);
 
 // 非空字符串
-Preconditions.checkArgument(!name.trim().isEmpty(),
+Preconditions.checkArgument(!name.isBlank(),
     "name must not be blank, but was: '%s'", name);
 
 // 集合大小
@@ -434,8 +454,8 @@ class UserServiceTest {
     
     @ParameterizedTest
     @CsvSource({
-        "user1, -1, age out of range",
-        "user1, 151, age out of range",
+        "user1, -1, age must be in range",
+        "user1, 151, age must be in range",
         "'', 25, userId must not be blank"
     })
     void updateUser_InvalidInputs_ShouldThrowException(
@@ -470,9 +490,10 @@ void updateUser_ValidAge_ShouldSucceed(int age) {
 ## 10. 代码审查清单
 
 - [ ] 所有 `public` / `protected` 方法是否都有参数校验？
+- [ ] Spring Boot 项目是否使用了 `jakarta.annotation`（而非 `javax.annotation`）？
 - [ ] 异常信息是否清晰，包含参数名、期望值和实际值？
 - [ ] 是否将 `assert` 误用于外部输入校验？
-- [ ] 注解声明（`@NotNull` / `@Nullable`）是否与校验逻辑一致？
+- [ ] 注解声明（`@NonNull` / `@Nullable`）是否与校验逻辑一致？
 - [ ] 私有方法涉及外部数据时是否进行了关键参数校验？
 - [ ] 子类重写方法是否遵循 LSP 原则？
 - [ ] 类不变式是否在关键方法后得到维护？
@@ -484,11 +505,12 @@ void updateUser_ValidAge_ShouldSucceed(int age) {
 
 | 类型 | 推荐库 | 说明 |
 |------|--------|------|
-| 前置条件校验 | Guava `Preconditions` | 功能全面，推荐首选 |
+| 前置条件校验 | Guava `Preconditions` | 非 Spring 项目推荐首选 |
+| 前置条件校验 | Spring `Assert` | Spring Boot 项目首选，零额外依赖 |
 | 前置条件校验 | Apache Commons Lang `Validate` | 备选方案 |
 | 非空校验 | JDK `Objects.requireNonNull` | 零依赖，轻量级 |
-| 注解 | `javax.annotation` (JSR-305) | 标准注解 |
-| 注解 | `org.jetbrains.annotations` | IntelliJ 兼容 |
+| 注解 | `jakarta.annotation` (Jakarta EE 10) | Spring Boot 3.x 标准注解 |
+| 注解 | `org.jetbrains.annotations` | IntelliJ IDEA 兼容 |
 | 单元测试 | JUnit 5 | 现代测试框架 |
 | 断言增强 | AssertJ | 流式断言 API |
 
@@ -532,7 +554,7 @@ void updateUser_ValidAge_ShouldSucceed(int age) {
 Objects.requireNonNull(param, "paramName must not be null");
 
 // 字符串非空
-Preconditions.checkArgument(!str.trim().isEmpty(), 
+Preconditions.checkArgument(!str.isBlank(),
     "str must not be blank");
 
 // 数值范围
