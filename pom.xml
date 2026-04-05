@@ -7,7 +7,7 @@
     <parent>
         <groupId>org.springframework.boot</groupId>
         <artifactId>spring-boot-starter-parent</artifactId>
-        <version>3.5.11</version>
+        <version>4.0.5</version>
         <relativePath/>
     </parent>
 
@@ -34,16 +34,29 @@
                 <artifactId>json-masker</artifactId>
                 <version>1.1.2</version>
             </dependency>
+
+            <!-- Logstash Logback Encoder for structured JSON logging -->
+            <dependency>
+                <groupId>net.logstash.logback</groupId>
+                <artifactId>logstash-logback-encoder</artifactId>
+                <version>8.0</version>
+            </dependency>
         </dependencies>
     </dependencyManagement>
 
     <dependencies>
         <!-- ==================== Main Dependencies ==================== -->
 
-        <!-- Spring Boot Web -->
+        <!-- Spring Boot Web MVC (replaces spring-boot-starter-web) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-web</artifactId>
+            <artifactId>spring-boot-starter-webmvc</artifactId>
+        </dependency>
+
+        <!-- Spring Boot RestTemplate/RestClient support -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-restclient</artifactId>
         </dependency>
 
         <dependency>
@@ -57,6 +70,24 @@
             <artifactId>spring-boot-starter-data-jdbc</artifactId>
         </dependency>
 
+        <!-- Micrometer Metrics -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-micrometer-metrics</artifactId>
+        </dependency>
+
+        <!-- OpenTelemetry -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-opentelemetry</artifactId>
+        </dependency>
+
+        <!-- Actuator -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-actuator</artifactId>
+        </dependency>
+
         <!-- MySQL Driver (Runtime) -->
         <dependency>
             <groupId>com.mysql</groupId>
@@ -67,6 +98,13 @@
         <dependency>
             <groupId>dev.blaauwendraad</groupId>
             <artifactId>json-masker</artifactId>
+        </dependency>
+
+        <!-- Logstash Logback Encoder (Structured JSON logging) -->
+        <dependency>
+            <groupId>net.logstash.logback</groupId>
+            <artifactId>logstash-logback-encoder</artifactId>
+            <scope>runtime</scope>
         </dependency>
 
         <!-- Lombok -->
@@ -84,10 +122,17 @@
 
         <!-- ==================== Test Dependencies ==================== -->
 
-        <!-- Spring Boot Test -->
+        <!-- Spring Boot Web MVC Test (brings spring-boot-starter-test transitively) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
+            <artifactId>spring-boot-starter-webmvc-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- TestRestTemplate (Spring Boot 4 new module) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-resttestclient</artifactId>
             <scope>test</scope>
         </dependency>
 

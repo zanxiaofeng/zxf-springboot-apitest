@@ -9,15 +9,6 @@ spring:
     username: sa
     password: password
 
-  # H2 Console
-  h2:
-    console:
-      enabled: true
-      path: /h2-console
-      settings:
-        trace: false
-        web-allow-others: false
-
   # SQL Init Mode - disabled, using @Sql instead
   sql:
     init:
@@ -27,6 +18,20 @@ spring:
 task-service:
   url: http://localhost:8090
 
+# Actuator & Observability (test)
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,metrics
+  metrics:
+    export:
+      prometheus:
+        enabled: false
+      simple:
+        enabled: true
+  tracing:
+    enabled: false
 
 zxf:
   trace:

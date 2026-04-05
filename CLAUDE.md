@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Spring Boot 3.5 demo project demonstrating API testing best practices with WireMock and H2 in-memory database.
+Spring Boot 4.0.5 demo project demonstrating API testing best practices with WireMock, H2 in-memory database, and observability (Micrometer, OpenTelemetry, Logback).
 
 ## Commands
 
@@ -36,9 +36,11 @@ Controller → Service → DatabaseService/TaskService → JdbcTemplate/TaskServ
 
 ### Key Components
 
-- **Controllers**: `ProjectController` (`/api/projects`), `TaskController` (`/api/tasks`)
-- **Services**: `DatabaseService` (JDBC operations), `TaskService` (orchestrates DB + external calls)
+- **Controllers**: `ProjectController` (`/api/projects`), `TaskController` (`/api/tasks`), `MetricsDemoController` (`/api/demo/metrics`), `TracingDemoController` (`/api/demo/tracing`), `LogbackDemoController` (`/api/demo/logging`)
+- **Services**: `DatabaseService` (JDBC operations), `TaskService` (orchestrates DB + external calls) `MetricsDemoService` (Micrometer demos) `TracingDemoService` (OpenTelemetry tracing)
 - **TaskServiceClient**: Calls downstream `task-service` at port 8090 (mocked in tests via WireMock)
+
+
 
 ### Test Infrastructure
 

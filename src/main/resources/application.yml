@@ -10,12 +10,6 @@ spring:
     username: ${DB_USERNAME:demo}
     password: ${DB_PASSWORD:}
 
-  # JPA/Hibernate
-  jpa:
-    hibernate:
-      ddl-auto: validate
-    show-sql: true
-
   # SQL Init
   sql:
     init:
@@ -27,6 +21,27 @@ spring:
 # Task Service Configuration
 task-service:
   url: http://localhost:8090
+
+# Actuator & Observability
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+  metrics:
+    tags:
+      application: zxf-springboot-apitest
+    export:
+      prometheus:
+        enabled: true
+      simple:
+        enabled: true
+  tracing:
+    sampling:
+      probability: 1.0
 
 # Logging
 logging:

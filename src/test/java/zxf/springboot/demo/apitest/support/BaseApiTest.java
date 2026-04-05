@@ -1,8 +1,9 @@
 package zxf.springboot.demo.apitest.support;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.resttestclient.TestRestTemplate;
+import org.springframework.boot.resttestclient.autoconfigure.AutoConfigureTestRestTemplate;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.http.*;
 import org.springframework.test.context.jdbc.Sql;
 import zxf.springboot.demo.apitest.support.sql.DatabaseVerifier;
@@ -22,6 +23,7 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
  * - Provides simplified HTTP methods with built-in assertions
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@AutoConfigureTestRestTemplate
 @Sql(scripts = {"classpath:sql/cleanup/clean-up.sql", "classpath:sql/init/schema.sql", "classpath:sql/init/data.sql"})
 public abstract class BaseApiTest {
     @Autowired

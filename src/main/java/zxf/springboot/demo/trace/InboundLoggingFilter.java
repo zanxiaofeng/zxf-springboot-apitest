@@ -35,7 +35,7 @@ public class InboundLoggingFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
         StopWatch stopWatch = new StopWatch();
         stopWatch.start();
-        ContentCachingRequestWrapper requestWrapper = new ContentCachingRequestWrapper(request);
+        ContentCachingRequestWrapper requestWrapper = new ContentCachingRequestWrapper(request, 4096);
         ContentCachingResponseWrapper responseWrapper = new ContentCachingResponseWrapper(response);
 
         try {
