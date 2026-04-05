@@ -5,6 +5,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import zxf.springboot.demo.exception.BusinessException;
 import zxf.springboot.demo.service.model.Project;
 
@@ -97,14 +98,22 @@ public class ProjectService {
 
     /**
      * Delete project by ID.
-     * Checks for related tasks before deletion.
+     * Uses transaction + row-level locking on project to prevent TOCTOU race condition.
      * @throws BusinessException if project not found or has associated tasks
      */
+    @Transactional
     public void deleteProject(String id) {
         log.info("Deleting project: {}", id);
 
-        // Check if project exists - will throw BusinessException if not found
-        queryProjectById(id);
+        // Lock project row — prevents concurrent task inserts referencing this project
+        try {
+            jdbcTemplate.queryForMap(
+                "SELECT id FROM project WHERE id = :id FOR UPDATE",
+                Collections.singletonMap("id", id)
+            );
+        } catch (EmptyResultDataAccessException e) {
+            throw BusinessException.notFound("Project", id);
+        }
 
         // Check if there are related tasks
         int taskCount = jdbcTemplate.queryForObject(

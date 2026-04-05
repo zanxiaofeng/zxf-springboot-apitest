@@ -7,6 +7,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.client.RestClientException;
 import zxf.springboot.demo.exception.model.ErrorResponse;
 
 import java.time.Instant;
@@ -75,6 +76,20 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponse.builder()
                         .error(ex.getMessage())
                         .errorCode("INVALID_ARGUMENT")
+                        .timestamp(Instant.now())
+                        .build());
+    }
+
+    /**
+     * Handle downstream service call failures
+     */
+    @ExceptionHandler(RestClientException.class)
+    public ResponseEntity<ErrorResponse> handleRestClientException(RestClientException ex) {
+        log.error("Downstream service call failed: {}", ex.getMessage(), ex);
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(ErrorResponse.builder()
+                        .error("Downstream service unavailable")
+                        .errorCode("SERVICE_UNAVAILABLE")
                         .timestamp(Instant.now())
                         .build());
     }

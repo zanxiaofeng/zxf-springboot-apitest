@@ -22,11 +22,16 @@ import java.util.Map;
 @Component
 public class TaskServiceClient {
     private final RestTemplate restTemplate;
-    @Value("${task-service.url:http://localhost:8090}")
-    private String taskServiceUrl;
+    private final String taskServiceUrl;
 
-    public TaskServiceClient(RestTemplateBuilder builder, OutboundLoggingInterceptor interceptor) {
-        this.restTemplate = builder.additionalInterceptors(interceptor).build();
+    public TaskServiceClient(RestTemplateBuilder builder, OutboundLoggingInterceptor interceptor,
+                             @Value("${task-service.url:http://localhost:8090}") String taskServiceUrl) {
+        this.taskServiceUrl = taskServiceUrl;
+        this.restTemplate = builder
+                .additionalInterceptors(interceptor)
+                .setConnectTimeout(Duration.ofSeconds(5))
+                .setReadTimeout(Duration.ofSeconds(10))
+                .build();
     }
 
     /**
@@ -55,13 +60,8 @@ public class TaskServiceClient {
                 headers
         );
 
-        try {
-            ResponseEntity<ExternalTask> response = restTemplate.exchange(url, HttpMethod.POST, request, ExternalTask.class);
-            return response.getBody();
-        } catch (Exception e) {
-            log.error("Failed to call task-service to create task: {}", e.getMessage());
-            return null;
-        }
+        ResponseEntity<ExternalTask> response = restTemplate.exchange(url, HttpMethod.POST, request, ExternalTask.class);
+        return response.getBody();
     }
 
     /**
@@ -87,13 +87,8 @@ public class TaskServiceClient {
                 headers
         );
 
-        try {
-            ResponseEntity<ExternalTask> response = restTemplate.exchange(url, HttpMethod.PUT, request, ExternalTask.class, taskId);
-            return response.getBody();
-        } catch (Exception e) {
-            log.error("Failed to call task-service to update task: {}", e.getMessage());
-            return null;
-        }
+        ResponseEntity<ExternalTask> response = restTemplate.exchange(url, HttpMethod.PUT, request, ExternalTask.class, taskId);
+        return response.getBody();
     }
 
     /**
@@ -107,12 +102,7 @@ public class TaskServiceClient {
 
         String url = taskServiceUrl + "/tasks/{id}";
 
-        try {
-            restTemplate.exchange(url, HttpMethod.DELETE, null, Void.class, taskId);
-            return true;
-        } catch (Exception e) {
-            log.error("Failed to call task-service to delete task: {}", e.getMessage());
-            return false;
-        }
+        restTemplate.exchange(url, HttpMethod.DELETE, null, Void.class, taskId);
+        return true;
     }
 }

@@ -40,4 +40,12 @@ public class BusinessException extends RuntimeException {
             HttpStatus.BAD_REQUEST
         );
     }
+
+    public static BusinessException serviceUnavailable(String serviceName, String detail) {
+        return new BusinessException(
+            serviceName + " is unavailable: " + detail,
+            "SERVICE_UNAVAILABLE",
+            HttpStatus.SERVICE_UNAVAILABLE
+        );
+    }
 }

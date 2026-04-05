@@ -28,31 +28,39 @@ public class TaskService {
 
     /**
      * Create a new task.
-     * The task is stored locally and submitted to the async processor.
+     * The task is stored locally first, then submitted to the async processor.
      */
+    @Transactional
     public Task createTask(String name, String projectId, Integer priority) {
         String id = UUID.randomUUID().toString();
         String status = "PENDING";
 
         log.info("Creating task: id={}, name={}, projectId={}", id, name, projectId);
 
-        // Call downstream async processor first
-        ExternalTask externalTask = taskServiceClient.createTask(id, name, projectId, priority);
-        String externalTaskId = externalTask != null ? externalTask.getTaskId() : null;
-
-        // Store locally with external reference
+        // Store locally first (PENDING status) — ensures local record exists even if downstream fails
         jdbcTemplate.update(
-            "INSERT INTO task (id, name, status, project_id, priority, external_task_id) " +
-            "VALUES (:id, :name, :status, :projectId, :priority, :externalTaskId)",
+            "INSERT INTO task (id, name, status, project_id, priority) " +
+            "VALUES (:id, :name, :status, :projectId, :priority)",
             Map.of(
                 "id", id,
                 "name", name,
                 "status", status,
                 "projectId", StringUtils.defaultString(projectId),
-                "priority", ObjectUtils.defaultIfNull(priority, 0),
-                "externalTaskId", StringUtils.defaultString(externalTaskId)
+                "priority", ObjectUtils.defaultIfNull(priority, 0)
             )
         );
+
+        // Submit to downstream async processor
+        ExternalTask externalTask = taskServiceClient.createTask(id, name, projectId, priority);
+        String externalTaskId = externalTask != null ? externalTask.getTaskId() : null;
+
+        // Update with external reference
+        if (externalTaskId != null) {
+            jdbcTemplate.update(
+                "UPDATE task SET external_task_id = :externalTaskId WHERE id = :id",
+                Map.of("id", id, "externalTaskId", externalTaskId)
+            );
+        }
 
         return Task.builder()
                 .id(id)
@@ -122,7 +130,7 @@ public class TaskService {
         // Check if exists - will throw BusinessException if not found
         Task existing = getTaskById(id);
 
-        // Update downstream
+        // Update downstream — exception propagates and rolls back local transaction
         taskServiceClient.updateTask(id, name, priority);
 
         // Update local
@@ -151,13 +159,13 @@ public class TaskService {
      * @throws BusinessException if task not found
      */
     @Transactional
-    public boolean deleteTask(String id) {
+    public void deleteTask(String id) {
         log.info("Deleting task: id={}", id);
 
         // Check if exists - will throw BusinessException if not found
         getTaskById(id);
 
-        // Delete from downstream
+        // Delete from downstream — exception propagates and rolls back local transaction
         taskServiceClient.deleteTask(id);
 
         // Delete from local
@@ -165,7 +173,5 @@ public class TaskService {
             "DELETE FROM task WHERE id = :id",
             Map.of("id", id)
         );
-
-        return true;
     }
 }
