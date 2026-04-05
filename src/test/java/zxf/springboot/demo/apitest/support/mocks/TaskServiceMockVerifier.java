@@ -1,6 +1,7 @@
 package zxf.springboot.demo.apitest.support.mocks;
 
 import com.github.tomakehurst.wiremock.client.WireMock;
+import lombok.experimental.UtilityClass;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 
@@ -9,6 +10,7 @@ import static com.github.tomakehurst.wiremock.client.WireMock.*;
 /**
  * Verifier for checking that task-service was called with expected parameters.
  */
+@UtilityClass
 public class TaskServiceMockVerifier {
 
     /**

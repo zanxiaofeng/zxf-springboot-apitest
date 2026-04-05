@@ -1,5 +1,6 @@
 package zxf.springboot.demo.apitest.support.json;
 
+import lombok.experimental.UtilityClass;
 import org.skyscreamer.jsonassert.Customization;
 import org.skyscreamer.jsonassert.JSONCompareMode;
 import org.skyscreamer.jsonassert.RegularExpressionValueMatcher;
@@ -10,11 +11,8 @@ import org.skyscreamer.jsonassert.comparator.JSONComparator;
  * Factory for creating JSON comparators with custom matching rules.
  * Useful for ignoring dynamic fields during assertion.
  */
+@UtilityClass
 public final class JsonComparatorFactory {
-
-    private JsonComparatorFactory() {
-    }
-
     /**
      * Creates a JSON comparator for API response validation.
      * Ignores dynamic fields like timestamps, IDs, and external task IDs.

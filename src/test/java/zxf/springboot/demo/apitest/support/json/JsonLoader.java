@@ -1,5 +1,6 @@
 package zxf.springboot.demo.apitest.support.json;
 
+import lombok.experimental.UtilityClass;
 import org.springframework.core.io.ClassPathResource;
 
 import java.io.IOException;
@@ -11,11 +12,8 @@ import java.util.Map;
  * Utility class for loading JSON test data from classpath resources.
  * Supports template variables using ${variable} syntax.
  */
+@UtilityClass
 public final class JsonLoader {
-
-    private JsonLoader() {
-    }
-
     /**
      * Load JSON content from classpath resource.
      *
