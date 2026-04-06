@@ -2,7 +2,6 @@ package zxf.springboot.demo.service;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -46,7 +45,7 @@ public class TaskService {
                 "name", name,
                 "status", status,
                 "projectId", StringUtils.defaultString(projectId),
-                "priority", ObjectUtils.defaultIfNull(priority, 0)
+                "priority", Objects.requireNonNullElse(priority, 0)
             )
         );
 
@@ -139,7 +138,7 @@ public class TaskService {
             Map.of(
                 "id", id,
                 "name", StringUtils.defaultString(name),
-                "priority", ObjectUtils.defaultIfNull(priority, 0)
+                "priority", Objects.requireNonNullElse(priority, 0)
             )
         );
 

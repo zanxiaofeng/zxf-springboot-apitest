@@ -1,7 +1,6 @@
 package zxf.springboot.demo.client;
 
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
@@ -14,6 +13,7 @@ import zxf.springboot.demo.trace.OutboundLoggingInterceptor;
 
 import java.time.Duration;
 import java.util.Map;
+import java.util.Objects;
 
 /**
  * Client for downstream task-service (async task processor).
@@ -54,7 +54,7 @@ public class TaskServiceClient {
                         "id", taskId,
                         "name", name,
                         "projectId", StringUtils.defaultString(projectId),
-                        "priority", ObjectUtils.defaultIfNull(priority, 0)
+                        "priority", Objects.requireNonNullElse(priority, 0)
                 ))
                 .retrieve()
                 .body(ExternalTask.class);
@@ -71,7 +71,7 @@ public class TaskServiceClient {
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(Map.of(
                         "name", StringUtils.defaultString(name),
-                        "priority", ObjectUtils.defaultIfNull(priority, 0)
+                        "priority", Objects.requireNonNullElse(priority, 0)
                 ))
                 .retrieve()
                 .body(ExternalTask.class);

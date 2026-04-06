@@ -38,7 +38,7 @@ public class SensitiveDataHelper {
 
         boolean isSensitive = false;
         for (String sensitiveHeader : sensitiveProperties.getHeaders()) {
-            if (StringUtils.equalsIgnoreCase(headerName, sensitiveHeader)) {
+            if (headerName.equalsIgnoreCase(sensitiveHeader)) {
                 isSensitive = true;
                 break;
             }

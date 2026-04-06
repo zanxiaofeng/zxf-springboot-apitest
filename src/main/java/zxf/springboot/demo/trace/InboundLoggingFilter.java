@@ -93,7 +93,7 @@ public class InboundLoggingFilter extends OncePerRequestFilter {
         try {
             Charset charset = encoding != null ? Charset.forName(encoding) : StandardCharsets.UTF_8;
             String contentString = new String(contentBytes, charset);
-            if (StringUtils.isEmpty(contentString) || !StringUtils.containsIgnoreCase(contentType, "json")) {
+            if (StringUtils.isEmpty(contentString) || contentType == null || !contentType.toLowerCase().contains("json")) {
                 return contentString;
             }
             return sensitiveDataHelper.maskSensitiveDataFromJson(contentString);
