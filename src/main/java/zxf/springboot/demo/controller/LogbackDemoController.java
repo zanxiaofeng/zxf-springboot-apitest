@@ -15,15 +15,16 @@ public class LogbackDemoController {
     @GetMapping("/demo")
     public ResponseEntity<Map<String, String>> loggingDemo(@RequestParam(defaultValue = "world") String name) {
         MDC.put("demo.user", name);
+        try {
+            log.info("Processing logging demo request");
+            log.debug("Debug level message with parameter: name={}", name);
+            log.warn("Warning: this is a structured log demo");
 
-        log.info("Processing logging demo request");
-        log.debug("Debug level message with parameter: name={}", name);
-        log.warn("Warning: this is a structured log demo");
-
-        String result = "Hello, %s! Check logs for structured output.".formatted(name);
-        MDC.remove("demo.user");
-
-        return ResponseEntity.ok(Map.of("result", result));
+            String result = "Hello, %s! Check logs for structured output.".formatted(name);
+            return ResponseEntity.ok(Map.of("result", result));
+        } finally {
+            MDC.remove("demo.user");
+        }
     }
 
     @GetMapping("/levels")

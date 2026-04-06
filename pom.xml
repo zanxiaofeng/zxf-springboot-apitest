@@ -88,6 +88,12 @@
             <artifactId>spring-boot-starter-actuator</artifactId>
         </dependency>
 
+        <!-- AspectJ (required for @Timed/@Counted annotations) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-aspectj</artifactId>
+        </dependency>
+
         <!-- MySQL Driver (Runtime) -->
         <dependency>
             <groupId>com.mysql</groupId>

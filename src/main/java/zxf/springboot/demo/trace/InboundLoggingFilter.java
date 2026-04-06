@@ -55,7 +55,7 @@ public class InboundLoggingFilter extends OncePerRequestFilter {
 
     private void logRequestAndResponse(ContentCachingRequestWrapper request, ContentCachingResponseWrapper response, long elapsedMillis) {
         try {
-            boolean isSuccess = HttpStatus.valueOf(response.getStatus()).is2xxSuccessful();
+            boolean isSuccess = response.getStatus() >= 200 && response.getStatus() < 300;
 
             boolean loggingEnabled = isSuccess ? log.isDebugEnabled() : log.isErrorEnabled();
             if (!loggingEnabled) {
