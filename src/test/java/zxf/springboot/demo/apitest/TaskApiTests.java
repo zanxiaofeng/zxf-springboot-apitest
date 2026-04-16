@@ -27,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Features:
  * - Uses WireMock to mock task-service (async task processor)
  * - Uses H2 in-memory database
- * - Uses TestRestTemplate for HTTP calls
+ * - Uses WebTestClient for HTTP calls
  * - Uses JSONAssert for response validation
  * - Each test method tests only ONE endpoint
  */

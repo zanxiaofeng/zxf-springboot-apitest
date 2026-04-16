@@ -135,10 +135,10 @@
             <scope>test</scope>
         </dependency>
 
-        <!-- TestRestTemplate (Spring Boot 4 new module) -->
+        <!-- WebTestClient (requires spring-webflux for reactive HTTP client) -->
         <dependency>
             <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-resttestclient</artifactId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
             <scope>test</scope>
         </dependency>
 

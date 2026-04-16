@@ -23,12 +23,11 @@ import java.util.Objects;
 @Component
 public class TaskServiceClient {
     private final RestClient restClient;
-    private final String taskServiceUrl;
 
     public TaskServiceClient(RestClient.Builder builder, OutboundLoggingInterceptor interceptor,
                              @Value("${task-service.url:http://localhost:8090}") String taskServiceUrl) {
-        this.taskServiceUrl = taskServiceUrl;
         this.restClient = builder
+                .baseUrl(taskServiceUrl)
                 .requestInterceptor(interceptor)
                 .requestFactory(clientHttpRequestFactory())
                 .build();
@@ -48,7 +47,7 @@ public class TaskServiceClient {
         log.info("Calling task-service to create task: id={}, name={}", taskId, name);
 
         return restClient.post()
-                .uri(taskServiceUrl + "/tasks")
+                .uri("/tasks")
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(Map.of(
                         "id", taskId,
@@ -67,7 +66,7 @@ public class TaskServiceClient {
         log.info("Calling task-service to update task: id={}, name={}", taskId, name);
 
         return restClient.put()
-                .uri(taskServiceUrl + "/tasks/{id}", taskId)
+                .uri( "/tasks/{id}", taskId)
                 .contentType(MediaType.APPLICATION_JSON)
                 .body(Map.of(
                         "name", StringUtils.defaultString(name),
@@ -84,7 +83,7 @@ public class TaskServiceClient {
         log.info("Calling task-service to delete task: id={}", taskId);
 
         restClient.delete()
-                .uri(taskServiceUrl + "/tasks/{id}", taskId)
+                .uri("/tasks/{id}", taskId)
                 .retrieve()
                 .toBodilessEntity();
         return true;
