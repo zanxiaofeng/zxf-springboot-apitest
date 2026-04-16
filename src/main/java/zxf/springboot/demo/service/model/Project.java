@@ -17,6 +17,7 @@ import java.time.LocalDateTime;
 public class Project {
     private String id;
     private String name;
+    private String details;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 }

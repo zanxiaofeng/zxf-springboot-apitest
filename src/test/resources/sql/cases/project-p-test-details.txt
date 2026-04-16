@@ -1,0 +1,2 @@
+This is a long text loaded from file for case-level SQL testing.
+It demonstrates FILEREAD function in H2 database for CLOB columns.
