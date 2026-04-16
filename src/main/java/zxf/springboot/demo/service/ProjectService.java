@@ -10,6 +10,7 @@ import zxf.springboot.demo.exception.BusinessException;
 import zxf.springboot.demo.service.model.Project;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -29,11 +30,12 @@ public class ProjectService {
     public List<Project> findAllProjects() {
         log.info("Finding all projects");
         return jdbcTemplate.query(
-            "SELECT id, name, created_at, updated_at FROM project ORDER BY name",
+            "SELECT id, name, details, created_at, updated_at FROM project ORDER BY name",
             Collections.emptyMap(),
             (rs, rowNum) -> Project.builder()
                     .id(rs.getString("id"))
                     .name(rs.getString("name"))
+                    .details(rs.getString("details"))
                     .createdAt(rs.getTimestamp("created_at").toLocalDateTime())
                     .updatedAt(rs.getTimestamp("updated_at").toLocalDateTime())
                     .build()
@@ -48,12 +50,13 @@ public class ProjectService {
         log.info("Querying project by id: {}", projectId);
         try {
             Map<String, Object> row = jdbcTemplate.queryForMap(
-                "SELECT id, name, created_at, updated_at FROM project WHERE id = :id",
+                "SELECT id, name, details, created_at, updated_at FROM project WHERE id = :id",
                 Collections.singletonMap("id", projectId)
             );
             return Project.builder()
                     .id((String) row.get("id"))
                     .name((String) row.get("name"))
+                    .details((String) row.get("details"))
                     .createdAt(((java.sql.Timestamp) row.get("created_at")).toLocalDateTime())
                     .updatedAt(((java.sql.Timestamp) row.get("updated_at")).toLocalDateTime())
                     .build();
@@ -66,29 +69,37 @@ public class ProjectService {
     /**
      * Create a new project with auto-generated ID.
      */
-    public Project createProject(String name) {
+    public Project createProject(String name, String details) {
         String id = UUID.randomUUID().toString();
         log.info("Creating project: id={}, name={}", id, name);
+        Map<String, Object> params = new HashMap<>();
+        params.put("id", id);
+        params.put("name", name);
+        params.put("details", details);
         jdbcTemplate.update(
-            "INSERT INTO project (id, name, created_at, updated_at) VALUES (:id, :name, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
-            Map.of("id", id, "name", name)
+            "INSERT INTO project (id, name, details, created_at, updated_at) VALUES (:id, :name, :details, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)",
+            params
         );
         return queryProjectById(id);
     }
 
     /**
-     * Update project name.
+     * Update project name and details.
      * @throws BusinessException if project not found
      */
-    public Project updateProject(String id, String name) {
+    public Project updateProject(String id, String name, String details) {
         log.info("Updating project: {} - {}", id, name);
 
         // Check if exists - will throw BusinessException if not found
         queryProjectById(id);
 
+        Map<String, Object> updateParams = new HashMap<>();
+        updateParams.put("id", id);
+        updateParams.put("name", name);
+        updateParams.put("details", details);
         int updated = jdbcTemplate.update(
-            "UPDATE project SET name = :name, updated_at = CURRENT_TIMESTAMP WHERE id = :id",
-            Map.of("id", id, "name", name)
+            "UPDATE project SET name = :name, details = :details, updated_at = CURRENT_TIMESTAMP WHERE id = :id",
+            updateParams
         );
         if (updated == 0) {
             throw BusinessException.notFound("Project", id);

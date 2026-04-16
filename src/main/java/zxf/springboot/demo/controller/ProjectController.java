@@ -50,7 +50,7 @@ public class ProjectController {
     public ResponseEntity<Project> createProject(@Valid @RequestBody ProjectRequest request) {
         log.info("::createProject - name: {}", request.getName());
 
-        Project project = projectService.createProject(request.getName());
+        Project project = projectService.createProject(request.getName(), request.getDetails());
         return ResponseEntity.status(HttpStatus.CREATED).body(project);
     }
 
@@ -61,7 +61,7 @@ public class ProjectController {
     public ResponseEntity<Project> updateProject(@PathVariable String id, @Valid @RequestBody ProjectRequest request) {
         log.info("::updateProject - id: {}, name: {}", id, request.getName());
 
-        Project project = projectService.updateProject(id, request.getName());
+        Project project = projectService.updateProject(id, request.getName(), request.getDetails());
         return ResponseEntity.ok(project);
     }
 

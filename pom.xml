@@ -91,6 +91,13 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- WebTestClient (requires spring-webflux for reactive HTTP client) -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-webflux</artifactId>
+            <scope>test</scope>
+        </dependency>
+
         <!-- H2 Database (Test Only) -->
         <dependency>
             <groupId>com.h2database</groupId>

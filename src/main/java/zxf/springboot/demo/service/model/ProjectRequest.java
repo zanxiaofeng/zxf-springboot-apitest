@@ -14,4 +14,5 @@ import lombok.NoArgsConstructor;
 public class ProjectRequest {
     @NotBlank(message = "name is required")
     private String name;
+    private String details;
 }

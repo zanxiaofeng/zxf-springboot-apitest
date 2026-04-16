@@ -1,19 +1,17 @@
 package zxf.springboot.demo.apitest.support;
 
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.client.TestRestTemplate;
+import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.*;
 import org.springframework.test.context.jdbc.Sql;
+import org.springframework.test.web.reactive.server.EntityExchangeResult;
+import org.springframework.test.web.reactive.server.WebTestClient;
 import zxf.springboot.demo.apitest.support.sql.DatabaseVerifier;
 
-import java.net.URI;
-
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertTrue;
-
 /**
- * Base test class for API tests using TestRestTemplate.
+ * Base test class for API tests using WebTestClient.
  * Provides common GET/POST/PUT/DELETE methods with status assertion.
  * <p>
  * Key features:
@@ -24,11 +22,20 @@ import static org.junit.jupiter.api.Assertions.assertTrue;
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @Sql(scripts = {"classpath:sql/cleanup/clean-up.sql", "classpath:sql/init/schema.sql", "classpath:sql/init/data.sql"})
 public abstract class BaseApiTest {
-    @Autowired
-    protected TestRestTemplate testRestTemplate;
+    @LocalServerPort
+    private int port;
+
+    protected WebTestClient webTestClient;
 
     @Autowired
     protected DatabaseVerifier databaseVerifier;
+
+    @PostConstruct
+    void initWebTestClient() {
+        this.webTestClient = WebTestClient.bindToServer()
+                .baseUrl("http://localhost:" + port)
+                .build();
+    }
 
     // ==================== GET Methods ====================
 
@@ -43,13 +50,15 @@ public abstract class BaseApiTest {
      * @return ResponseEntity with typed body
      */
     protected <T> ResponseEntity<T> httpGetAndAssert(String url, HttpHeaders requestHeaders, Class<T> tClass, HttpStatus expectedStatus, MediaType expectedContentType) {
-        RequestEntity<String> requestEntity = new RequestEntity<>(null, requestHeaders, HttpMethod.GET, URI.create(url));
-        ResponseEntity<T> responseEntity = testRestTemplate.exchange(requestEntity, tClass);
-        assertThat(responseEntity.getStatusCode()).isEqualTo(expectedStatus);
-        if (expectedContentType != null) {
-            assertTrue(expectedContentType.isCompatibleWith(responseEntity.getHeaders().getContentType()));
-        }
-        return responseEntity;
+        var responseSpec = webTestClient.get()
+                .uri(url)
+                .headers(h -> h.putAll(requestHeaders))
+                .exchange();
+
+        responseSpec.expectStatus().isEqualTo(expectedStatus);
+        assertContentType(responseSpec, expectedContentType);
+
+        return toResponseEntity(responseSpec.expectBody(tClass).returnResult());
     }
 
     // ==================== POST Methods ====================
@@ -66,13 +75,17 @@ public abstract class BaseApiTest {
      * @return ResponseEntity with typed body
      */
     protected <T> ResponseEntity<T> httpPostAndAssert(String url, HttpHeaders requestHeaders, String requestBody, Class<T> tClass, HttpStatus expectedStatus, MediaType expectedContentType) {
-        RequestEntity<String> requestEntity = new RequestEntity<>(requestBody, requestHeaders, HttpMethod.POST, URI.create(url));
-        ResponseEntity<T> responseEntity = testRestTemplate.exchange(requestEntity, tClass);
-        assertThat(responseEntity.getStatusCode()).isEqualTo(expectedStatus);
-        if (expectedContentType != null) {
-            assertTrue(expectedContentType.isCompatibleWith(responseEntity.getHeaders().getContentType()));
-        }
-        return responseEntity;
+        var requestSpec = webTestClient.post()
+                .uri(url)
+                .headers(h -> h.putAll(requestHeaders));
+
+        var responseSpec = (requestBody != null ? requestSpec.bodyValue(requestBody) : requestSpec)
+                .exchange();
+
+        responseSpec.expectStatus().isEqualTo(expectedStatus);
+        assertContentType(responseSpec, expectedContentType);
+
+        return toResponseEntity(responseSpec.expectBody(tClass).returnResult());
     }
 
     // ==================== PUT Methods ====================
@@ -89,13 +102,16 @@ public abstract class BaseApiTest {
      * @return ResponseEntity with typed body
      */
     protected <T> ResponseEntity<T> httpPutAndAssert(String url, HttpHeaders requestHeaders, String requestBody, Class<T> tClass, HttpStatus expectedStatus, MediaType expectedContentType) {
-        RequestEntity<String> requestEntity = new RequestEntity<>(requestBody, requestHeaders, HttpMethod.PUT, URI.create(url));
-        ResponseEntity<T> responseEntity = testRestTemplate.exchange(requestEntity, tClass);
-        assertThat(responseEntity.getStatusCode()).isEqualTo(expectedStatus);
-        if (expectedContentType != null) {
-            assertTrue(expectedContentType.isCompatibleWith(responseEntity.getHeaders().getContentType()));
-        }
-        return responseEntity;
+        var responseSpec = webTestClient.put()
+                .uri(url)
+                .headers(h -> h.putAll(requestHeaders))
+                .bodyValue(requestBody)
+                .exchange();
+
+        responseSpec.expectStatus().isEqualTo(expectedStatus);
+        assertContentType(responseSpec, expectedContentType);
+
+        return toResponseEntity(responseSpec.expectBody(tClass).returnResult());
     }
 
     // ==================== DELETE Methods ====================
@@ -111,13 +127,29 @@ public abstract class BaseApiTest {
      * @return ResponseEntity with typed body
      */
     protected <T> ResponseEntity<T> httpDeleteAndAssert(String url, HttpHeaders requestHeaders, Class<T> tClass, HttpStatus expectedStatus, MediaType expectedContentType) {
-        RequestEntity<String> requestEntity = new RequestEntity<>(null, requestHeaders, HttpMethod.DELETE, URI.create(url));
-        ResponseEntity<T> responseEntity = testRestTemplate.exchange(requestEntity, tClass);
-        assertThat(responseEntity.getStatusCode()).isEqualTo(expectedStatus);
-        if (expectedContentType != null && responseEntity.getHeaders().getContentType() != null) {
-            assertTrue(expectedContentType.isCompatibleWith(responseEntity.getHeaders().getContentType()));
+        var responseSpec = webTestClient.delete()
+                .uri(url)
+                .headers(h -> h.putAll(requestHeaders))
+                .exchange();
+
+        responseSpec.expectStatus().isEqualTo(expectedStatus);
+        assertContentType(responseSpec, expectedContentType);
+
+        return toResponseEntity(responseSpec.expectBody(tClass).returnResult());
+    }
+
+    // ==================== Common Methods ====================
+
+    private void assertContentType(WebTestClient.ResponseSpec responseSpec, MediaType expectedContentType) {
+        if (expectedContentType != null) {
+            responseSpec.expectHeader().contentType(expectedContentType);
         }
-        return responseEntity;
+    }
+
+    private <T> ResponseEntity<T> toResponseEntity(EntityExchangeResult<T> result) {
+        return ResponseEntity.status(result.getStatus())
+                .headers(result.getResponseHeaders())
+                .body(result.getResponseBody());
     }
 
     /**
