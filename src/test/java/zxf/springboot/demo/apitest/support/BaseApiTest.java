@@ -1,9 +1,8 @@
 package zxf.springboot.demo.apitest.support;
 
-import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.autoconfigure.web.reactive.AutoConfigureWebTestClient;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.*;
 import org.springframework.test.context.jdbc.Sql;
 import org.springframework.test.web.reactive.server.EntityExchangeResult;
@@ -20,22 +19,14 @@ import zxf.springboot.demo.apitest.support.sql.DatabaseVerifier;
  * - Provides simplified HTTP methods with built-in assertions
  */
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
+@AutoConfigureWebTestClient
 @Sql(scripts = {"classpath:sql/cleanup/clean-up.sql", "classpath:sql/init/schema.sql", "classpath:sql/init/data.sql"})
 public abstract class BaseApiTest {
-    @LocalServerPort
-    private int port;
-
+    @Autowired
     protected WebTestClient webTestClient;
-
     @Autowired
     protected DatabaseVerifier databaseVerifier;
 
-    @PostConstruct
-    void initWebTestClient() {
-        this.webTestClient = WebTestClient.bindToServer()
-                .baseUrl("http://localhost:" + port)
-                .build();
-    }
 
     // ==================== GET Methods ====================
 
